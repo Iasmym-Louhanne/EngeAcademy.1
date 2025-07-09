@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/contexts/auth-context";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,12 +31,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Header />
-        <div className="flex-1">
-          {children}
-        </div>
-        <Footer />
-        <Toaster position="top-right" />
+        <AuthProvider>
+          <Header />
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
+          <Toaster position="top-right" />
+        </AuthProvider>
       </body>
     </html>
   );

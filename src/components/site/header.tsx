@@ -16,11 +16,38 @@ import {
   SheetContent, 
   SheetTrigger 
 } from "@/components/ui/sheet";
-import { Menu, X, ShoppingCart, User, LogIn } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  ShoppingCart, 
+  User, 
+  LogIn, 
+  LogOut, 
+  LayoutDashboard, 
+  Settings
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isLoggedIn = false; // Em uma aplicação real, isso viria de um hook de autenticação
+  const { user, logout } = useAuth();
+
+  // Mapear o tipo de usuário para o caminho do dashboard
+  const getDashboardPath = () => {
+    if (!user) return "/dashboard";
+    return `/dashboard/${user.role}`;
+  };
+
+  // Obter as iniciais do nome do usuário para o avatar
+  const getInitials = () => {
+    if (!user) return "?";
+    return user.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -56,26 +83,40 @@ export function Header() {
             </Button>
           </Link>
 
-          {isLoggedIn ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/images/avatar.png" alt="Avatar" />
-                    <AvatarFallback>US</AvatarFallback>
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/aluno">Meus Cursos</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/perfil">Meu Perfil</Link>
-                </DropdownMenuItem>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/auth/logout">Sair</Link>
+                  <Link href={getDashboardPath()} className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Meu Painel</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/perfil" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -106,6 +147,12 @@ export function Header() {
                   <span className="sr-only">Fechar</span>
                 </Button>
               </div>
+              {user && (
+                <div className="flex flex-col space-y-1 mb-6 pb-6 border-b">
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                </div>
+              )}
               <nav className="flex flex-col gap-4">
                 <Link href="/cursos" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                   Cursos
@@ -119,20 +166,28 @@ export function Header() {
                 <Link href="/contato" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                   Contato
                 </Link>
-                {isLoggedIn ? (
+                {user ? (
                   <>
-                    <Link href="/dashboard/aluno" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
-                      Meus Cursos
+                    <Link href={getDashboardPath()} className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
+                      Meu Painel
                     </Link>
                     <Link href="/perfil" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
-                      Meu Perfil
+                      Configurações
                     </Link>
-                    <Link href="/auth/logout" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
+                    <button 
+                      onClick={() => { 
+                        logout(); 
+                        setIsMenuOpen(false); 
+                      }} 
+                      className="text-base font-medium text-left flex items-center gap-2 text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" />
                       Sair
-                    </Link>
+                    </button>
                   </>
                 ) : (
-                  <Link href="/auth/login" className="text-base font-medium" onClick={() => setIsMenuOpen(false)}>
+                  <Link href="/auth/login" className="text-base font-medium flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                    <LogIn className="h-4 w-4" />
                     Entrar
                   </Link>
                 )}

@@ -1,17 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Building2, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function DashboardSelection() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  // Redirecionar automaticamente com base no tipo de usuário
+  useEffect(() => {
+    if (user) {
+      const dashboardPath = `/dashboard/${user.role}`;
+      router.push(dashboardPath);
+    }
+  }, [user, router]);
+
   return (
     <div className="container py-12 px-4 md:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">EngeAcademy - Dashboard</h1>
-          <p className="text-muted-foreground">Selecione o tipo de painel para acessar</p>
+          <p className="text-muted-foreground">Redirecionando para seu painel específico...</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
