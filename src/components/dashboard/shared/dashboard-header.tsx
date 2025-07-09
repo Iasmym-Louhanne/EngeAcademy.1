@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Bell, LogOut } from "lucide-react";
+import { BranchSwitcher } from "./branch-switcher";
 
 interface DashboardHeaderProps {
   title: string;
@@ -40,6 +41,13 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
       </div>
       
       <div className="flex items-center gap-3">
+        {/* Seletor de Filial - apenas para admin e supervisor */}
+        {(user?.role === 'admin' || user?.role === 'supervisor') && 
+          user?.accessibleBranches && 
+          user.accessibleBranches.length > 0 && (
+          <BranchSwitcher />
+        )}
+        
         <ModeToggle />
         
         <Button variant="ghost" size="icon" className="relative">

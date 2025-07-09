@@ -17,9 +17,11 @@ export type Permission =
   | 'view:branches'
   | 'edit:branches'
   | 'manage:users'
-  | 'configure:company';
+  | 'configure:company'
+  | 'manage:branches';
 
-export type Role = 'aluno' | 'empresa' | 'filial' | 'admin' | 'supervisor' | 'instrutor';
+// Removemos 'filial' dos tipos de usuário
+export type Role = 'aluno' | 'empresa' | 'admin' | 'supervisor' | 'instrutor';
 
 // Mapeamento de permissões por papel
 const rolePermissions: Record<Role, Permission[]> = {
@@ -40,15 +42,6 @@ const rolePermissions: Record<Role, Permission[]> = {
     'view:branches',
     'configure:company'
   ],
-  filial: [
-    'view:employees',
-    'edit:employees',
-    'view:courses',
-    'view:reports',
-    'export:reports',
-    'view:certificates',
-    'view:branches'
-  ],
   admin: [
     'view:employees',
     'edit:employees',
@@ -68,7 +61,8 @@ const rolePermissions: Record<Role, Permission[]> = {
     'view:branches',
     'edit:branches',
     'manage:users',
-    'configure:company'
+    'configure:company',
+    'manage:branches'
   ],
   supervisor: [
     'view:employees',
@@ -88,4 +82,24 @@ const rolePermissions: Record<Role, Permission[]> = {
 // Função para verificar se um usuário tem uma determinada permissão
 export function hasPermission(role: Role, permission: Permission): boolean {
   return rolePermissions[role]?.includes(permission) || false;
+}
+
+// Interface para uma filial
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  phone?: string;
+  email?: string;
+  manager?: string;
+  isActive: boolean;
+}
+
+// Interface para usuário com acesso a filiais
+export interface UserBranchAccess {
+  userId: string;
+  branchId: string;
+  permissions: Permission[];
 }

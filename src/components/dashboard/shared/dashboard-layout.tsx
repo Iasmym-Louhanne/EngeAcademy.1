@@ -33,7 +33,7 @@ type NavItem = {
 
 type DashboardLayoutProps = {
   children: ReactNode;
-  userType: "aluno" | "empresa" | "filial" | "admin";
+  userType: "aluno" | "empresa" | "admin";
 };
 
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
@@ -96,33 +96,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         icon: <Settings className="h-5 w-5" />,
       },
     ],
-    filial: [
-      {
-        title: "Visão Geral",
-        href: "/dashboard/filial",
-        icon: <LayoutDashboard className="h-5 w-5" />,
-      },
-      {
-        title: "Funcionários",
-        href: "/dashboard/filial/funcionarios",
-        icon: <Users className="h-5 w-5" />,
-      },
-      {
-        title: "Progresso",
-        href: "/dashboard/filial/progresso",
-        icon: <BarChart3 className="h-5 w-5" />,
-      },
-      {
-        title: "Relatórios",
-        href: "/dashboard/filial/relatorios",
-        icon: <FileText className="h-5 w-5" />,
-      },
-      {
-        title: "Configurações",
-        href: "/dashboard/filial/configuracoes",
-        icon: <Settings className="h-5 w-5" />,
-      },
-    ],
     admin: [
       {
         title: "Visão Geral",
@@ -142,6 +115,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       {
         title: "Empresas",
         href: "/dashboard/admin/empresas",
+        icon: <Building2 className="h-5 w-5" />,
+      },
+      {
+        title: "Filiais",
+        href: "/dashboard/admin/filiais",
         icon: <Building2 className="h-5 w-5" />,
       },
       {
@@ -167,10 +145,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     empresa: {
       title: "Painel da Empresa",
       description: "Gerencie funcionários e treinamentos"
-    },
-    filial: {
-      title: "Painel da Filial",
-      description: "Gerencie funcionários locais e treinamentos"
     },
     admin: {
       title: "Painel de Administração",

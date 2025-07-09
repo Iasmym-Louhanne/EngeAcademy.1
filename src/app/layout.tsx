@@ -6,6 +6,7 @@ import { Footer } from "@/components/site/footer";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ThemeProvider } from "@/components/theme-provider";
+import { BranchSelectorWrapper } from "@/components/branch-selector-wrapper";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,6 +40,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
+            <BranchSelectorWrapper />
             <Header />
             <div className="flex-1">
               {children}
