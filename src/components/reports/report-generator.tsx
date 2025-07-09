@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { 
@@ -24,10 +23,9 @@ import {
   FileText, 
   Filter, 
   RefreshCw, 
-  Save, 
   Search,
-  FilePdf,
-  FileSpreadsheet
+  FileSpreadsheet,
+  File
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { hasPermission } from "@/lib/permissions";
@@ -161,7 +159,7 @@ export function ReportGenerator<T>({
                   size="sm"
                   onClick={handleExportCSV}
                 >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   CSV
                 </Button>
                 <Button 
@@ -169,7 +167,7 @@ export function ReportGenerator<T>({
                   size="sm"
                   onClick={handleExportPDF}
                 >
-                  <FilePdf className="mr-2 h-4 w-4" />
+                  <File className="mr-2 h-4 w-4" />
                   PDF
                 </Button>
               </div>
