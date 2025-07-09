@@ -23,7 +23,7 @@ export function BranchSelector() {
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-3xl">
         <CardHeader>
           <CardTitle className="text-xl flex items-center">
             <Building2 className="mr-2 h-5 w-5 text-primary" />
@@ -37,14 +37,14 @@ export function BranchSelector() {
           <RadioGroup 
             value={selectedBranchId} 
             onValueChange={setSelectedBranchId}
-            className="space-y-3"
+            className="grid grid-cols-1 md:grid-cols-2 gap-3"
           >
             {availableBranches.map((branch) => (
               <div 
                 key={branch.id} 
                 className={`flex items-start space-x-3 rounded-md border p-3 ${
                   selectedBranchId === branch.id ? 'border-primary bg-primary/5' : ''
-                } hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer`}
+                } hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer h-full`}
                 onClick={() => setSelectedBranchId(branch.id)}
               >
                 <RadioGroupItem value={branch.id} id={branch.id} className="mt-1" />
@@ -58,7 +58,7 @@ export function BranchSelector() {
                   <div className="text-sm text-muted-foreground space-y-1">
                     <div className="flex items-center">
                       <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                      <span>{branch.address}</span>
+                      <span className="line-clamp-1">{branch.address}</span>
                     </div>
                     <div className="flex items-center">
                       <Landmark className="h-3.5 w-3.5 mr-1 text-muted-foreground" />

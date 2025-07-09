@@ -102,7 +102,7 @@ export default function BranchesPage() {
   return (
     <DashboardLayout userType="admin">
       <div className="grid gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-2xl font-bold flex items-center">
             <Building2 className="mr-2 h-6 w-6 text-primary" />
             Gerenciamento de Filiais
@@ -115,7 +115,7 @@ export default function BranchesPage() {
                 Nova Filial
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Adicionar Nova Filial</DialogTitle>
                 <DialogDescription>
@@ -123,7 +123,7 @@ export default function BranchesPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="required">Nome da Filial</Label>
                     <Input
@@ -152,7 +152,7 @@ export default function BranchesPage() {
                     onChange={(e) => setNewBranch({ ...newBranch, address: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city" className="required">Cidade</Label>
                     <Input
@@ -172,7 +172,7 @@ export default function BranchesPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Telefone</Label>
                     <Input
@@ -288,7 +288,7 @@ export default function BranchesPage() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>Editar Filial</DialogTitle>
                               <DialogDescription>
@@ -297,7 +297,7 @@ export default function BranchesPage() {
                             </DialogHeader>
                             {editingBranch && (
                               <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="edit-name">Nome da Filial</Label>
                                     <Input
@@ -323,7 +323,7 @@ export default function BranchesPage() {
                                     onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
                                   />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="edit-city">Cidade</Label>
                                     <Input
@@ -341,7 +341,7 @@ export default function BranchesPage() {
                                     />
                                   </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="edit-phone">Telefone</Label>
                                     <Input
