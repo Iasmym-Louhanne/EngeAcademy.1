@@ -6,13 +6,35 @@ import { notFound } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle, Circle, Lock } from 'lucide-react';
 import { VideoPlayer } from '@/components/video-player';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { generateCertificate } from '@/lib/certificate-generator';
 
+// Definir tipagem para o objeto de curso
+interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  duration?: string;
+  price?: number;
+  thumbnail?: string;
+  featured?: boolean;
+  tags?: string[];
+}
+
 // Mock data for modules and lessons - this would come from Supabase
-const courseStructure = {
+const courseStructure: Record<string, Array<{
+  id: string;
+  title: string;
+  isQuiz?: boolean;
+  lessons?: Array<{
+    id: string;
+    title: string;
+    videoId: string;
+  }>;
+}>> = {
   'nr-35-trabalho-em-altura': [
     { id: 'mod1', title: 'Módulo 1: Introdução e Normas', lessons: [
       { id: 'les1', title: 'O que é a NR 35?', videoId: 'dQw4w9WgXcQ' },
@@ -27,7 +49,7 @@ const courseStructure = {
 };
 
 export default function TrainingPage({ params }: { params: { slug: string } }) {
-  const course = courses.find((c) => c.slug === params.slug);
+  const course = courses.find((c: Course) => c.slug === params.slug);
   const structure = courseStructure[params.slug as keyof typeof courseStructure] || [];
 
   const [activeLesson, setActiveLesson] = useState(structure[0]?.lessons?.[0]?.id || null);

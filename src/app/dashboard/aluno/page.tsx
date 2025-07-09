@@ -14,7 +14,13 @@ export default function AlunoDashboard() {
   
   // Obter detalhes completos dos cursos do usuário
   const userCourses = currentUser.courses.map(userCourse => {
-    const courseDetails = courses.find(c => c.id === userCourse.courseId);
+    const courseDetails = courses.find(c => c.id === userCourse.courseId) || {
+      id: userCourse.courseId,
+      title: "Curso não encontrado",
+      slug: "curso-nao-encontrado",
+      duration: "N/A"
+    };
+    
     return {
       ...courseDetails,
       progress: userCourse.progress,
@@ -83,10 +89,10 @@ export default function AlunoDashboard() {
               <CourseCard
                 key={course.id}
                 id={course.id}
-                title={course.title}
-                slug={course.slug}
+                title={course.title || "Sem título"}
+                slug={course.slug || "sem-slug"}
                 progress={course.progress}
-                duration={course.duration}
+                duration={course.duration || "N/A"}
                 completed={course.completed}
               />
             ))}

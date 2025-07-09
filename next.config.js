@@ -6,7 +6,7 @@ const nextConfig = {
   // Desabilitar strict mode para compatibilidade
   reactStrictMode: false,
 
-  // Configurações para melhor compatibilidade de deploy (baseado na v0)
+  // Configurações para melhor compatibilidade de deploy
   eslint: {
     ignoreDuringBuilds: true,
   },
