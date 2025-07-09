@@ -8,7 +8,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20" />
       
       {/* Content */}
-      <div className="container relative py-20 md:py-32">
+      <div className="container relative py-20 md:py-32 px-4 md:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tighter mb-6">

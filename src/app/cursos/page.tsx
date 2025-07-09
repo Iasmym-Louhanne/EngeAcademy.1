@@ -12,7 +12,7 @@ export default function CoursesPage() {
   );
 
   return (
-    <div className="container py-12">
+    <div className="container py-12 px-4 md:px-6 lg:px-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Catálogo de Cursos</h1>
@@ -24,7 +24,7 @@ export default function CoursesPage() {
         {/* Search bar */}
         <div className="w-full md:w-64 lg:w-72">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar cursos..." className="pl-8" />
           </div>
         </div>
