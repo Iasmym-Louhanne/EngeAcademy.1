@@ -9,6 +9,7 @@ import { VideoPlayer } from '@/components/video-player';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
+import { generateCertificate } from '@/lib/certificate-generator';
 
 // Mock data for modules and lessons - this would come from Supabase
 const courseStructure = {
@@ -32,6 +33,7 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
   const [activeLesson, setActiveLesson] = useState(structure[0]?.lessons?.[0]?.id || null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [showQuiz, setShowQuiz] = useState(false);
+  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
 
   const totalLessons = useMemo(() => structure.flatMap(mod => mod.lessons || []).length, [structure]);
   const progress = useMemo(() => (completedLessons.size / totalLessons) * 100, [completedLessons, totalLessons]);
@@ -57,35 +59,43 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
   const handleVideoEnd = () => {
     if (activeLesson) {
       setCompletedLessons(prev => new Set(prev).add(activeLesson));
-      // Here you would call Supabase to save progress
-      // e.g., await supabase.from('student_progress').insert({ user_id: ..., lesson_id: activeLesson })
+      // Em uma aplicação real, você chamaria o Supabase para salvar o progresso
+      // ex: await supabase.from('student_progress').insert({ user_id: ..., lesson_id: activeLesson })
     }
   };
   
   const handleCertificateGeneration = async () => {
+    setIsGeneratingCertificate(true);
     toast.loading("Gerando seu certificado...");
-    // In a real app, you would get the user ID from the session
-    const mockUserId = 'some-user-id'; 
     
     try {
-        // This would be a call to our edge function
-        // const { data, error } = await supabase.functions.invoke('generate-certificate', {
-        //     body: { userId: mockUserId, courseId: course.id }
-        // });
-        // if (error) throw error;
-
-        // Mocking the response for now
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const pdfUrl = "/fake-certificate.pdf";
+        // Em uma aplicação real, você obteria estes dados da sessão e do banco de dados
+        const studentName = "Aluno Exemplo";
+        const completionDate = new Date().toLocaleDateString('pt-BR');
+        
+        const pdfUrl = await generateCertificate({
+            studentName,
+            courseName: course.title,
+            completionDate,
+            courseId: course.id,
+        });
 
         toast.dismiss();
         toast.success("Certificado gerado com sucesso!");
-        window.open(pdfUrl, '_blank');
-
+        
+        // Abrir o PDF em uma nova janela
+        const newWindow = window.open();
+        if (newWindow) {
+            newWindow.location.href = pdfUrl;
+        } else {
+            toast.error("Seu navegador bloqueou a abertura do certificado. Verifique suas configurações.");
+        }
     } catch (error) {
         toast.dismiss();
         toast.error("Falha ao gerar o certificado. Tente novamente.");
         console.error(error);
+    } finally {
+        setIsGeneratingCertificate(false);
     }
   }
 
@@ -148,7 +158,12 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
                 <h2 className="text-2xl font-bold mb-4">Prova Final</h2>
                 <p className="text-muted-foreground mb-6">A funcionalidade da prova será implementada em breve.</p>
                 <p className="mb-4">Por enquanto, vamos simular sua aprovação!</p>
-                <Button onClick={handleCertificateGeneration}>Gerar Certificado de Conclusão</Button>
+                <Button 
+                  onClick={handleCertificateGeneration} 
+                  disabled={isGeneratingCertificate}
+                >
+                  {isGeneratingCertificate ? 'Gerando...' : 'Gerar Certificado de Conclusão'}
+                </Button>
             </div>
         )}
         {!activeVideoId && !showQuiz && (
