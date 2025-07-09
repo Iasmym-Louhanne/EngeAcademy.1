@@ -6,7 +6,6 @@ import { Footer } from "@/components/site/footer";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ChatBubble } from "@/components/support/chat-bubble";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,7 +44,6 @@ export default function RootLayout({
               {children}
             </div>
             <Footer />
-            <ChatBubble />
             <Toaster position="top-right" />
           </AuthProvider>
         </ThemeProvider>

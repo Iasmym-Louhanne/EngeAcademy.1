@@ -30,7 +30,7 @@ import {
   FileSpreadsheet
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { PermissionGuard } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { toast } from "sonner";
 
 interface ReportGeneratorProps<T> {
@@ -133,6 +133,9 @@ export function ReportGenerator<T>({
     toast.success("Filtros redefinidos");
   };
 
+  // Verificar permissão para exportação
+  const canExport = user && hasPermission(user.role, 'export:reports');
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -151,10 +154,7 @@ export function ReportGenerator<T>({
               {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
             </Button>
             
-            <PermissionGuard 
-              role={user?.role || 'aluno'} 
-              permission="export:reports"
-            >
+            {canExport && (
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -173,7 +173,7 @@ export function ReportGenerator<T>({
                   PDF
                 </Button>
               </div>
-            </PermissionGuard>
+            )}
           </div>
         </div>
       </CardHeader>
