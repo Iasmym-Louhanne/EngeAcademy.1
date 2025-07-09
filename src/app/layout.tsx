@@ -5,6 +5,8 @@ import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ChatBubble } from "@/components/support/chat-bubble";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,18 +29,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <AuthProvider>
-          <Header />
-          <div className="flex-1">
-            {children}
-          </div>
-          <Footer />
-          <Toaster position="top-right" />
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <Header />
+            <div className="flex-1">
+              {children}
+            </div>
+            <Footer />
+            <ChatBubble />
+            <Toaster position="top-right" />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

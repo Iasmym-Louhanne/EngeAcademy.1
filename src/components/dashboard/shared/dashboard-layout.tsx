@@ -21,11 +21,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DashboardHeader } from "./dashboard-header";
+import { useAuth } from "@/contexts/auth-context";
 
 type NavItem = {
   title: string;
   href: string;
   icon: ReactNode;
+  permission?: string;
 };
 
 type DashboardLayoutProps = {
@@ -36,6 +39,7 @@ type DashboardLayoutProps = {
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const navItems: Record<string, NavItem[]> = {
     aluno: [
@@ -155,11 +159,23 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   const currentNavItems = navItems[userType] || [];
   
-  const userTitles = {
-    aluno: "Painel do Aluno",
-    empresa: "Painel da Empresa",
-    filial: "Painel da Filial",
-    admin: "Painel de Administração",
+  const userTitles: Record<string, { title: string; description?: string }> = {
+    aluno: {
+      title: "Painel do Aluno",
+      description: "Acesse seus cursos e certificados"
+    },
+    empresa: {
+      title: "Painel da Empresa",
+      description: "Gerencie funcionários e treinamentos"
+    },
+    filial: {
+      title: "Painel da Filial",
+      description: "Gerencie funcionários locais e treinamentos"
+    },
+    admin: {
+      title: "Painel de Administração",
+      description: "Administre todos os aspectos da plataforma"
+    },
   };
 
   return (
@@ -219,18 +235,27 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           >
             <Avatar className="h-8 w-8">
               <AvatarImage src="/images/avatar.png" />
-              <AvatarFallback>US</AvatarFallback>
+              <AvatarFallback>
+                {user?.name
+                  ? user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .substring(0, 2)
+                  : "US"}
+              </AvatarFallback>
             </Avatar>
             {isSidebarOpen && (
               <div className="ml-3">
-                <p className="text-sm font-medium">Usuário</p>
-                <Link
-                  href="/auth/logout"
+                <p className="text-sm font-medium">{user?.name || "Usuário"}</p>
+                <button
+                  onClick={logout}
                   className="text-xs text-muted-foreground flex items-center hover:text-primary"
                 >
                   <LogOut className="h-3 w-3 mr-1" />
                   Sair
-                </Link>
+                </button>
               </div>
             )}
           </div>
@@ -280,17 +305,26 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             <div className="flex items-center">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/images/avatar.png" />
-                <AvatarFallback>US</AvatarFallback>
+                <AvatarFallback>
+                  {user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .substring(0, 2)
+                    : "US"}
+                </AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium">Usuário</p>
-                <Link
-                  href="/auth/logout"
+                <p className="text-sm font-medium">{user?.name || "Usuário"}</p>
+                <button
+                  onClick={logout}
                   className="text-xs text-muted-foreground flex items-center hover:text-primary"
                 >
                   <LogOut className="h-3 w-3 mr-1" />
                   Sair
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -299,14 +333,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
       {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-background border-b h-16 flex items-center px-6">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{userTitles[userType]}</h1>
-          </div>
-        </header>
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+        <div className="p-6">
+          <DashboardHeader 
+            title={userTitles[userType]?.title || "Dashboard"}
+            description={userTitles[userType]?.description}
+          />
+          <main>
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );
