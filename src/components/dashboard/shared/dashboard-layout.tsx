@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardHeader } from "./dashboard-header";
 import { useAuth } from "@/contexts/auth-context";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type NavItem = {
   title: string;
@@ -40,6 +41,21 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar se estamos em um dispositivo móvel
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const navItems: Record<string, NavItem[]> = {
     aluno: [
@@ -180,26 +196,30 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             </Button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="space-y-1 px-2">
-            {currentNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors",
-                  pathname === item.href
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                  !isSidebarOpen && "justify-center"
-                )}
-              >
-                {item.icon}
-                {isSidebarOpen && <span className="ml-3">{item.title}</span>}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        
+        <ScrollArea className="flex-1">
+          <div className="py-4">
+            <nav className="space-y-1 px-2">
+              {currentNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors",
+                    pathname === item.href
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+                    !isSidebarOpen && "justify-center"
+                  )}
+                >
+                  {item.icon}
+                  {isSidebarOpen && <span className="ml-3">{item.title}</span>}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </ScrollArea>
+        
         <div className="border-t p-4">
           <div
             className={cn(
@@ -256,25 +276,29 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               </Button>
             </SheetTrigger>
           </div>
-          <div className="py-4">
-            <nav className="space-y-1 px-2">
-              {currentNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-3 text-sm font-medium rounded-md",
-                    pathname === item.href
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.title}</span>
-                </Link>
-              ))}
-            </nav>
-          </div>
+          
+          <ScrollArea className="h-[calc(100vh-8rem)]">
+            <div className="py-4">
+              <nav className="space-y-1 px-2">
+                {currentNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center px-3 py-3 text-sm font-medium rounded-md",
+                      pathname === item.href
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    <span className="ml-3">{item.title}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </ScrollArea>
+          
           <div className="border-t p-4">
             <div className="flex items-center">
               <Avatar className="h-8 w-8">
@@ -307,13 +331,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
       {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-6">
+        <div className="p-6 h-full flex flex-col">
           <DashboardHeader 
             title={userTitles[userType]?.title || "Dashboard"}
             description={userTitles[userType]?.description}
           />
-          <main>
-            {children}
+          <main className="flex-1 overflow-auto scroll-smooth">
+            <div className="pb-6">
+              {children}
+            </div>
           </main>
         </div>
       </div>

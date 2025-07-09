@@ -12,6 +12,7 @@ import { employees, companies, branches } from "@/lib/mock-data";
 import { Download, FileUp, Plus, Search, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export default function FuncionariosPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -218,7 +219,7 @@ export default function FuncionariosPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <ScrollableTable maxHeight="60vh" stickyHeader>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
@@ -266,7 +267,7 @@ export default function FuncionariosPage() {
                   })
                 )}
               </TableBody>
-            </Table>
+            </ScrollableTable>
           </CardContent>
         </Card>
       </div>

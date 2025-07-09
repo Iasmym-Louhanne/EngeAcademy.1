@@ -14,6 +14,7 @@ import { branches as initialBranches } from "@/contexts/auth-context";
 import { useAuth } from "@/contexts/auth-context";
 import { Building2, Edit, MapPin, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export default function BranchesPage() {
   const { user } = useAuth();
@@ -121,7 +122,7 @@ export default function BranchesPage() {
                   Preencha os dados da nova filial abaixo.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="required">Nome da Filial</Label>
@@ -229,7 +230,7 @@ export default function BranchesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <ScrollableTable maxHeight="60vh" stickyHeader>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
@@ -295,7 +296,7 @@ export default function BranchesPage() {
                               </DialogDescription>
                             </DialogHeader>
                             {editingBranch && (
-                              <div className="grid gap-4 py-4">
+                              <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <Label htmlFor="edit-name">Nome da Filial</Label>
@@ -387,7 +388,7 @@ export default function BranchesPage() {
                   ))
                 )}
               </TableBody>
-            </Table>
+            </ScrollableTable>
           </CardContent>
         </Card>
       </div>
