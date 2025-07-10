@@ -2,14 +2,13 @@
 
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { createClient } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const supabase = createClient();
   const { user } = useAuth();
   const router = useRouter();
 
