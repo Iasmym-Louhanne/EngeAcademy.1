@@ -136,8 +136,8 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         icon: <Shield className="h-5 w-5" />,
       },
       {
-        title: "Empresas",
-        href: "/dashboard/admin/empresas",
+        title: "Clientes",
+        href: "/dashboard/admin/clientes",
         icon: <Building2 className="h-5 w-5" />,
       },
       {

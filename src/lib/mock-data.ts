@@ -52,6 +52,7 @@ export const employees = [
     email: 'joao.silva@empresa.com',
     department: 'Manutenção',
     branch: 'São Paulo',
+    companyId: '1',
     courses: [
       { courseId: 'nr35', progress: 75, completed: false },
       { courseId: 'nr10', progress: 100, completed: true }
@@ -63,6 +64,7 @@ export const employees = [
     email: 'maria.oliveira@empresa.com',
     department: 'Produção',
     branch: 'Rio de Janeiro',
+    companyId: '1',
     courses: [
       { courseId: 'nr33', progress: 50, completed: false },
       { courseId: 'primeiros-socorros', progress: 100, completed: true }
@@ -74,6 +76,7 @@ export const employees = [
     email: 'carlos.santos@empresa.com',
     department: 'Elétrica',
     branch: 'São Paulo',
+    companyId: '1',
     courses: [
       { courseId: 'nr10', progress: 90, completed: false },
       { courseId: 'nr35', progress: 100, completed: true }
@@ -85,6 +88,7 @@ export const employees = [
     email: 'ana.souza@empresa.com',
     department: 'Segurança',
     branch: 'Belo Horizonte',
+    companyId: '2',
     courses: [
       { courseId: 'primeiros-socorros', progress: 80, completed: false },
       { courseId: 'nr33', progress: 100, completed: true }
@@ -103,6 +107,8 @@ export const companies = [
   { 
     id: '1', 
     name: 'Construções ABC', 
+    cnpj: '12.345.678/0001-90',
+    billingType: 'recorrente' as 'recorrente' | 'pontual',
     branches: ['São Paulo', 'Rio de Janeiro'], 
     totalEmployees: 205,
     activeCourses: 8,
@@ -111,6 +117,8 @@ export const companies = [
   { 
     id: '2', 
     name: 'Indústria XYZ', 
+    cnpj: '98.765.432/0001-10',
+    billingType: 'pontual' as 'recorrente' | 'pontual',
     branches: ['Belo Horizonte', 'Salvador'], 
     totalEmployees: 110,
     activeCourses: 6,
