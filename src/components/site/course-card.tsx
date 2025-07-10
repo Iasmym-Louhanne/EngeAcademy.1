@@ -1,8 +1,11 @@
+"use client";
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, BookOpen, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface CourseCardProps {
   id: string;
@@ -16,6 +19,13 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ id, title, slug, description, price, duration, tags = [], featured = false }: CourseCardProps) {
+  const router = useRouter();
+  
+  // Função para redirecionar para o checkout
+  const handleBuy = () => {
+    router.push(`/checkout?course=${id}`);
+  };
+  
   return (
     <Card className={`h-full flex flex-col ${featured ? 'border-primary/30 shadow-md' : ''}`}>
       <CardHeader className="pb-3">
@@ -55,7 +65,7 @@ export function CourseCard({ id, title, slug, description, price, duration, tags
               Detalhes
             </Button>
           </Link>
-          <Button className="flex-1 sm:flex-none">
+          <Button className="flex-1 sm:flex-none" onClick={handleBuy}>
             <ShoppingCart className="mr-2 h-4 w-4" />
             Comprar
           </Button>
