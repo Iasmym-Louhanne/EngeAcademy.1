@@ -34,13 +34,28 @@ export function Header() {
 
   // Mapear o tipo de usuário para o caminho do dashboard
   const getDashboardPath = () => {
-    if (!user) return "/dashboard";
-    return `/dashboard/${user.role}`;
+    if (!user) return "/auth/login";
+    
+    // A lógica agora usa o profileId para determinar o caminho correto
+    switch (user.profileId) {
+      case 'admin':
+        return '/dashboard/admin';
+      case 'supervisor':
+        return '/dashboard/empresa';
+      case 'commercial':
+        return '/dashboard/empresa';
+      case 'support':
+        return '/dashboard/admin';
+      // Adicione um caso para 'aluno' se existir um perfil para ele
+      // Por padrão, vamos usar o que está no localStorage ou um fallback
+      default:
+        return user.currentBranch ? `/dashboard/empresa` : `/dashboard/aluno`;
+    }
   };
 
   // Obter as iniciais do nome do usuário para o avatar
   const getInitials = () => {
-    if (!user) return "?";
+    if (!user?.name) return "?";
     return user.name
       .split(" ")
       .map((n) => n[0])

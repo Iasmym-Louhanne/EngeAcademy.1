@@ -63,13 +63,6 @@ export default function LoginPage() {
       icon: Building2,
       dashboardPath: "/dashboard/empresa",
     },
-    filial: {
-      id: "filial",
-      title: "Filial",
-      description: "Gerencie funcionários da unidade",
-      icon: UserCog,
-      dashboardPath: "/dashboard/filial",
-    },
     admin: {
       id: "admin",
       title: "Administrador",
@@ -83,13 +76,13 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
+      // A lógica de login agora só precisa do email
+      const success = await login(data.email);
       
       if (success) {
-        // Redirecionar com base no tipo selecionado
-        const dashboardPath = userTypes[activeTab]?.dashboardPath || "/dashboard";
-        toast.success(`Login bem-sucedido! Redirecionando para o painel ${userTypes[activeTab].title}`);
-        router.push(dashboardPath);
+        // O redirecionamento será tratado pelo contexto de autenticação
+        toast.success(`Login bem-sucedido! Redirecionando...`);
+        // O hook useEffect no layout do dashboard cuidará do redirecionamento
       } else {
         toast.error("Credenciais inválidas. Tente novamente.");
       }
@@ -107,85 +100,60 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Entrar na EngeAcademy</CardTitle>
             <CardDescription className="text-center">
-              Escolha o tipo de acesso abaixo
+              Acesse seu painel com seu email e senha
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 gap-2 mb-4">
-                <TabsTrigger value="aluno" className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  <span>Aluno</span>
-                </TabsTrigger>
-                <TabsTrigger value="empresa" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span>Empresa</span>
-                </TabsTrigger>
-              </TabsList>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    placeholder="seu@email.com"
+                    className="pl-10"
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
+              </div>
               
-              <TabsList className="grid grid-cols-2 gap-2 mb-6">
-                <TabsTrigger value="filial" className="flex items-center gap-2">
-                  <UserCog className="h-4 w-4" />
-                  <span>Filial</span>
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  <span>Admin</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      placeholder="seu@email.com"
-                      className="pl-10"
-                      {...register("email")}
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
-                  )}
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...register("password")}
+                  />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="pl-10"
-                      {...register("password")}
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password.message}</p>
-                  )}
-                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+              </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </Tabs>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-muted-foreground text-center">
-              <p>Credenciais de teste para {userTypes[activeTab].title}:</p>
-              <p className="font-mono bg-muted p-2 rounded-md mt-1">
-                {activeTab === "aluno" && "aluno@engeacademy.com"}
-                {activeTab === "empresa" && "empresa@engeacademy.com"}
-                {activeTab === "filial" && "filial@engeacademy.com"}
-                {activeTab === "admin" && "admin@engeacademy.com"}
-                <br />
-                Senha: senha123
-              </p>
+              <p>Credenciais de teste:</p>
+              <div className="font-mono bg-muted p-2 rounded-md mt-1 text-left text-xs">
+                <p><b>Admin:</b> admin@engeacademy.com</p>
+                <p><b>Supervisor:</b> supervisor@engeacademy.com</p>
+                <p><b>Comercial:</b> comercial@engeacademy.com</p>
+                <p><b>Suporte:</b> suporte@engeacademy.com</p>
+                <p className="mt-1"><b>Senha para todos:</b> senha123</p>
+              </div>
             </div>
             <div className="text-center mt-4">
               <Link href="/" className="text-sm text-primary hover:underline">
