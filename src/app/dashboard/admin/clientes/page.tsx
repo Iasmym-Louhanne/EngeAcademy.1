@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { companies } from "@/lib/mock-data";
-import { Building2, Search, User, Plus, FileClock, Repeat } from "lucide-react";
+import { Building2, Search, User, Users, Plus, FileClock, Repeat } from "lucide-react";
 import Link from "next/link";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 
