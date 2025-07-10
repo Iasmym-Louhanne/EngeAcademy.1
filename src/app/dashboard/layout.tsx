@@ -21,11 +21,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [user, isLoading, router]);
 
-  // Mostrar nada enquanto verifica a autenticação
+  // Mostrar uma tela de carregamento enquanto verifica a autenticação
   if (isLoading || !user) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="animate-pulse text-lg font-medium">Carregando...</div>
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="animate-pulse text-lg font-medium text-foreground">Carregando...</div>
       </div>
     );
   }
