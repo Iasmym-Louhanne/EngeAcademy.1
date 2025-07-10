@@ -1,90 +1,50 @@
+// Definição de todas as permissões possíveis na plataforma
 export type Permission = 
-  | 'view:employees'
-  | 'edit:employees'
-  | 'delete:employees'
-  | 'view:courses'
-  | 'edit:courses'
-  | 'delete:courses'
-  | 'view:reports'
-  | 'export:reports'
-  | 'view:certificates'
-  | 'issue:certificates'
-  | 'view:vouchers'
-  | 'create:vouchers'
-  | 'assign:courses'
-  | 'view:financials'
-  | 'edit:financials'
-  | 'view:branches'
-  | 'edit:branches'
+  // Usuários
   | 'manage:users'
-  | 'configure:company'
-  | 'manage:branches';
+  | 'view:users'
+  
+  // Perfis de Permissão
+  | 'manage:permissions'
+  | 'view:permissions'
 
-// Removemos 'filial' dos tipos de usuário
-export type Role = 'aluno' | 'empresa' | 'admin' | 'supervisor' | 'instrutor';
+  // Clientes (Empresas e Individuais)
+  | 'manage:clients'
+  | 'view:clients'
+  
+  // Cursos
+  | 'manage:courses'
+  | 'view:courses'
+  
+  // Filiais
+  | 'manage:branches'
+  | 'view:branches'
+  
+  // Financeiro
+  | 'manage:financials'
+  | 'view:financials'
+  
+  // Relatórios
+  | 'export:reports'
+  | 'view:reports'
+  
+  // Certificados
+  | 'issue:certificates'
+  | 'view:certificates'
+  
+  // Cupons
+  | 'manage:coupons'
+  | 'view:coupons';
 
-// Mapeamento de permissões por papel
-const rolePermissions: Record<Role, Permission[]> = {
-  aluno: [
-    'view:courses',
-    'view:certificates',
-    'view:vouchers'
-  ],
-  empresa: [
-    'view:employees',
-    'edit:employees',
-    'view:courses',
-    'view:reports',
-    'export:reports',
-    'view:certificates',
-    'view:vouchers',
-    'assign:courses',
-    'view:branches',
-    'configure:company'
-  ],
-  admin: [
-    'view:employees',
-    'edit:employees',
-    'delete:employees',
-    'view:courses',
-    'edit:courses',
-    'delete:courses',
-    'view:reports',
-    'export:reports',
-    'view:certificates',
-    'issue:certificates',
-    'view:vouchers',
-    'create:vouchers',
-    'assign:courses',
-    'view:financials',
-    'edit:financials',
-    'view:branches',
-    'edit:branches',
-    'manage:users',
-    'configure:company',
-    'manage:branches'
-  ],
-  supervisor: [
-    'view:employees',
-    'view:courses',
-    'view:reports',
-    'export:reports',
-    'view:certificates',
-    'view:branches'
-  ],
-  instrutor: [
-    'view:courses',
-    'view:reports',
-    'view:certificates'
-  ]
-};
-
-// Função para verificar se um usuário tem uma determinada permissão
-export function hasPermission(role: Role, permission: Permission): boolean {
-  return rolePermissions[role]?.includes(permission) || false;
+// Interface para um Perfil de Permissão
+export interface PermissionProfile {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
 }
 
-// Interface para uma filial
+// Interface para uma Filial
 export interface Branch {
   id: string;
   name: string;
@@ -95,11 +55,4 @@ export interface Branch {
   email?: string;
   manager?: string;
   isActive: boolean;
-}
-
-// Interface para usuário com acesso a filiais
-export interface UserBranchAccess {
-  userId: string;
-  branchId: string;
-  permissions: Permission[];
 }

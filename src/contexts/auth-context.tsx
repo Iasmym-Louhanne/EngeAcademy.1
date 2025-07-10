@@ -2,131 +2,41 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Role, hasPermission, Permission, Branch } from "@/lib/permissions";
+import { Permission, Branch, PermissionProfile } from "@/lib/permissions";
+import { getProfileById } from "@/lib/permission-service";
 
 // Interface para o usuário
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: Role;
-  organizationType?: 'empresa' | 'filial_engeacademy';
-  organizationId?: string;
-  organizationName?: string;
-  accessibleBranches?: string[]; // IDs das filiais que o usuário pode acessar
+  profileId: string; // ID do perfil de permissão
+  accessibleBranches: string[]; // IDs das filiais que o usuário pode acessar
+  hasFullAccess: boolean; // Se tem acesso a todas as filiais (modo admin)
   currentBranch?: Branch; // Filial atualmente selecionada
-  isAdminMode?: boolean; // Indica se o usuário está no modo admin
+  isActive: boolean;
 }
 
 // Lista de filiais
 export const branches: Branch[] = [
-  {
-    id: "branch-1",
-    name: "EngeAcademy Ceará",
-    address: "Av. Santos Dumont, 1000",
-    city: "Fortaleza",
-    state: "CE",
-    phone: "(85) 3333-4444",
-    email: "ceara@engeacademy.com",
-    manager: "Ana Silva",
-    isActive: true
-  },
-  {
-    id: "branch-2",
-    name: "EngeAcademy Belo Horizonte",
-    address: "Av. Amazonas, 2500",
-    city: "Belo Horizonte",
-    state: "MG",
-    phone: "(31) 3333-4444",
-    email: "bh@engeacademy.com",
-    manager: "Roberto Oliveira",
-    isActive: true
-  },
-  {
-    id: "branch-3",
-    name: "EngeAcademy Contagem",
-    address: "Av. João César de Oliveira, 1500",
-    city: "Contagem",
-    state: "MG",
-    phone: "(31) 3333-5555",
-    email: "contagem@engeacademy.com",
-    manager: "Carla Mendes",
-    isActive: true
-  },
-  {
-    id: "branch-4",
-    name: "EngeAcademy São Paulo",
-    address: "Av. Paulista, 1000",
-    city: "São Paulo",
-    state: "SP",
-    phone: "(11) 3333-4444",
-    email: "sp@engeacademy.com",
-    manager: "Paulo Santos",
-    isActive: true
-  }
+  { id: "branch-1", name: "EngeAcademy Ceará", address: "Av. Santos Dumont, 1000", city: "Fortaleza", state: "CE", manager: "Ana Silva", isActive: true },
+  { id: "branch-2", name: "EngeAcademy Belo Horizonte", address: "Av. Amazonas, 2500", city: "Belo Horizonte", state: "MG", manager: "Roberto Oliveira", isActive: true },
+  { id: "branch-3", name: "EngeAcademy Contagem", address: "Av. João César de Oliveira, 1500", city: "Contagem", state: "MG", manager: "Carla Mendes", isActive: true },
+  { id: "branch-4", name: "EngeAcademy São Paulo", address: "Av. Paulista, 1000", city: "São Paulo", state: "SP", manager: "Paulo Santos", isActive: true }
 ];
 
 // Usuários de teste para cada perfil
-export const testUsers = [
-  {
-    id: "aluno-1",
-    name: "João Silva",
-    email: "aluno@engeacademy.com",
-    password: "senha123",
-    role: "aluno" as Role,
-  },
-  {
-    id: "empresa-1",
-    name: "Construções ABC",
-    email: "empresa@engeacademy.com",
-    password: "senha123",
-    role: "empresa" as Role,
-    organizationType: "empresa" as const,
-    organizationId: "org-1",
-    organizationName: "Construções ABC Ltda."
-  },
-  {
-    id: "admin-1",
-    name: "Admin EngeAcademy",
-    email: "admin@engeacademy.com",
-    password: "senha123",
-    role: "admin" as Role,
-    organizationType: "filial_engeacademy" as const,
-    accessibleBranches: ["branch-1", "branch-2", "branch-3", "branch-4"], // Acesso a todas as filiais
-  },
-  {
-    id: "supervisor-1",
-    name: "Supervisor Ceará",
-    email: "supervisor.ce@engeacademy.com",
-    password: "senha123",
-    role: "supervisor" as Role,
-    organizationType: "filial_engeacademy" as const,
-    accessibleBranches: ["branch-1"], // Acesso apenas à filial do Ceará
-  },
-  {
-    id: "supervisor-2",
-    name: "Supervisor Minas",
-    email: "supervisor.mg@engeacademy.com",
-    password: "senha123",
-    role: "supervisor" as Role,
-    organizationType: "filial_engeacademy" as const,
-    accessibleBranches: ["branch-2", "branch-3"], // Acesso às filiais de MG
-  },
-  {
-    id: "instrutor-1",
-    name: "Instrutor de Cursos",
-    email: "instrutor@engeacademy.com",
-    password: "senha123",
-    role: "instrutor" as Role,
-    organizationType: "filial_engeacademy" as const,
-    accessibleBranches: ["branch-1", "branch-4"], // Acesso às filiais de CE e SP
-  }
+export const testUsers: User[] = [
+  { id: "user-admin", name: "Admin EngeAcademy", email: "admin@engeacademy.com", profileId: "admin", accessibleBranches: [], hasFullAccess: true, isActive: true },
+  { id: "user-supervisor", name: "Supervisor Regional", email: "supervisor@engeacademy.com", profileId: "supervisor", accessibleBranches: ["branch-2", "branch-3"], hasFullAccess: false, isActive: true },
+  { id: "user-commercial", name: "Consultor Comercial", email: "comercial@engeacademy.com", profileId: "commercial", accessibleBranches: ["branch-4"], hasFullAccess: false, isActive: true },
+  { id: "user-support", name: "Analista de Suporte", email: "suporte@engeacademy.com", profileId: "support", accessibleBranches: ["branch-1"], hasFullAccess: false, isActive: true },
 ];
 
 // Interface para o contexto de autenticação
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string) => Promise<boolean>; // Senha removida para simplificar
   logout: () => void;
   isLoading: boolean;
   hasPermission: (permission: Permission) => boolean;
@@ -136,10 +46,8 @@ interface AuthContextType {
   branches: Branch[];
 }
 
-// Criação do contexto de autenticação
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hook para usar o contexto de autenticação
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -148,76 +56,43 @@ export function useAuth() {
   return context;
 }
 
-// Provider do contexto de autenticação
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  
-  // Estado para controlar se o usuário precisa selecionar uma filial
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
+  const router = useRouter();
 
-  // Verificar se o usuário está logado ao carregar a página
   useEffect(() => {
     const storedUser = localStorage.getItem("engeacademy_user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-      
-      // Se é admin ou supervisor e não tem filial selecionada, precisa selecionar
-      if (
-        (parsedUser.role === 'admin' || parsedUser.role === 'supervisor') && 
-        !parsedUser.currentBranch && 
-        !parsedUser.isAdminMode &&
-        parsedUser.accessibleBranches?.length > 0
-      ) {
+      if (parsedUser.hasFullAccess === false && !parsedUser.currentBranch && parsedUser.accessibleBranches.length > 1) {
         setNeedsBranchSelection(true);
       }
     }
     setIsLoading(false);
   }, []);
 
-  // Função de login
-  const login = async (email: string, password: string) => {
-    // Simulando uma chamada de API
-    const foundUser = testUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-
+  const login = async (email: string) => {
+    const foundUser = testUsers.find(u => u.email === email);
     if (foundUser) {
-      // Extrair a senha antes de armazenar
-      const { password: _, ...userWithoutPassword } = foundUser;
-      
-      // Verificar se o usuário precisa selecionar uma filial
-      const needsSelection = 
-        (foundUser.role === 'admin' || foundUser.role === 'supervisor') && 
-        foundUser.accessibleBranches?.length > 0;
-      
+      let userToStore = { ...foundUser };
+      const needsSelection = !userToStore.hasFullAccess && userToStore.accessibleBranches.length > 1;
       setNeedsBranchSelection(needsSelection);
-      
-      // Se usuário tiver acesso a apenas uma filial, selecionar automaticamente
-      let userToStore = { ...userWithoutPassword };
-      if (foundUser.accessibleBranches?.length === 1) {
-        const branchId = foundUser.accessibleBranches[0];
-        const branch = branches.find(b => b.id === branchId);
-        if (branch) {
-          userToStore.currentBranch = branch;
-          setNeedsBranchSelection(false);
-        }
+
+      if (!userToStore.hasFullAccess && userToStore.accessibleBranches.length === 1) {
+        userToStore.currentBranch = branches.find(b => b.id === userToStore.accessibleBranches[0]);
+        setNeedsBranchSelection(false);
       }
       
       setUser(userToStore);
-      localStorage.setItem(
-        "engeacademy_user",
-        JSON.stringify(userToStore)
-      );
+      localStorage.setItem("engeacademy_user", JSON.stringify(userToStore));
       return true;
     }
-
     return false;
   };
 
-  // Função de logout
   const logout = () => {
     setUser(null);
     setNeedsBranchSelection(false);
@@ -225,77 +100,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/auth/login");
   };
 
-  // Verificar permissão do usuário atual
-  const checkPermission = (permission: Permission) => {
+  const hasPermission = (permission: Permission): boolean => {
     if (!user) return false;
-    return hasPermission(user.role, permission);
+    const profile = getProfileById(user.profileId);
+    return profile?.permissions.includes(permission) ?? false;
   };
-  
-  // Função para selecionar uma filial ou ativar o modo admin
+
   const selectBranch = (branchId: string) => {
     if (!user) return;
-    
-    // Verificar se o usuário está entrando no modo admin
-    if (branchId === "admin-mode") {
-      // Verificar se o usuário tem acesso a todas as filiais
-      const hasAllAccess = user.accessibleBranches?.length === branches.length;
-      
-      if (!hasAllAccess) {
-        console.error("Tentativa de acesso ao modo admin sem permissão");
-        return;
-      }
-      
-      const updatedUser = {
-        ...user,
-        isAdminMode: true,
-        currentBranch: undefined, // Limpar a filial selecionada
-        organizationName: "EngeAcademy (Todas as Filiais)"
-      };
-      
-      setUser(updatedUser);
-      setNeedsBranchSelection(false);
-      localStorage.setItem("engeacademy_user", JSON.stringify(updatedUser));
-      return;
-    }
-    
-    // Caso normal - selecionar uma filial específica
-    if (!user.accessibleBranches?.includes(branchId)) return;
-    
     const selectedBranch = branches.find(b => b.id === branchId);
-    if (!selectedBranch) return;
-    
-    const updatedUser = {
-      ...user,
-      currentBranch: selectedBranch,
-      isAdminMode: false,
-      organizationName: selectedBranch.name
-    };
-    
-    setUser(updatedUser);
-    setNeedsBranchSelection(false);
-    localStorage.setItem("engeacademy_user", JSON.stringify(updatedUser));
+    if (selectedBranch && (user.hasFullAccess || user.accessibleBranches.includes(branchId))) {
+      const updatedUser = { ...user, currentBranch: selectedBranch };
+      setUser(updatedUser);
+      localStorage.setItem("engeacademy_user", JSON.stringify(updatedUser));
+      setNeedsBranchSelection(false);
+    }
   };
-  
-  // Obter filiais disponíveis para o usuário atual
+
   const getAvailableBranches = (): Branch[] => {
-    if (!user || !user.accessibleBranches) return [];
-    return branches.filter(branch => 
-      user.accessibleBranches?.includes(branch.id) && branch.isActive
-    );
+    if (!user) return [];
+    if (user.hasFullAccess) return branches.filter(b => b.isActive);
+    return branches.filter(b => user.accessibleBranches.includes(b.id) && b.isActive);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      isLoading,
-      hasPermission: checkPermission,
-      selectBranch,
-      availableBranches: getAvailableBranches(),
-      needsBranchSelection,
-      branches
-    }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, hasPermission, selectBranch, availableBranches: getAvailableBranches(), needsBranchSelection, branches }}>
       {children}
     </AuthContext.Provider>
   );
