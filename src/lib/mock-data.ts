@@ -53,6 +53,7 @@ export const employees = [
     department: 'Manutenção',
     branch: 'São Paulo',
     companyId: '1',
+    status: 'active',
     courses: [
       { courseId: 'nr35', progress: 75, completed: false },
       { courseId: 'nr10', progress: 100, completed: true }
@@ -65,6 +66,7 @@ export const employees = [
     department: 'Produção',
     branch: 'Rio de Janeiro',
     companyId: '1',
+    status: 'active',
     courses: [
       { courseId: 'nr33', progress: 50, completed: false },
       { courseId: 'primeiros-socorros', progress: 100, completed: true }
@@ -77,6 +79,7 @@ export const employees = [
     department: 'Elétrica',
     branch: 'São Paulo',
     companyId: '1',
+    status: 'pending',
     courses: [
       { courseId: 'nr10', progress: 90, completed: false },
       { courseId: 'nr35', progress: 100, completed: true }
@@ -89,6 +92,7 @@ export const employees = [
     department: 'Segurança',
     branch: 'Belo Horizonte',
     companyId: '2',
+    status: 'active',
     courses: [
       { courseId: 'primeiros-socorros', progress: 80, completed: false },
       { courseId: 'nr33', progress: 100, completed: true }
@@ -109,6 +113,7 @@ export const companies = [
     name: 'Construções ABC', 
     cnpj: '12.345.678/0001-90',
     billingType: 'recorrente' as 'recorrente' | 'pontual',
+    branchId: '1',
     branches: ['São Paulo', 'Rio de Janeiro'], 
     totalEmployees: 205,
     activeCourses: 8,
@@ -119,10 +124,22 @@ export const companies = [
     name: 'Indústria XYZ', 
     cnpj: '98.765.432/0001-10',
     billingType: 'pontual' as 'recorrente' | 'pontual',
+    branchId: '2',
     branches: ['Belo Horizonte', 'Salvador'], 
     totalEmployees: 110,
     activeCourses: 6,
     logo: '/images/company-2.png'
+  },
+  { 
+    id: '3', 
+    name: 'Engenharia Delta', 
+    cnpj: '11.222.333/0001-44',
+    billingType: 'pontual' as 'recorrente' | 'pontual',
+    branchId: undefined, // Empresa sem filial associada
+    branches: ['Curitiba'], 
+    totalEmployees: 50,
+    activeCourses: 4,
+    logo: '/images/company-3.png'
   }
 ];
 
