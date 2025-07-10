@@ -6,17 +6,28 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/auth-context";
-import { Building2, Map, Landmark, MapPin } from "lucide-react";
+import { Building2, MapPin, Landmark, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 export function BranchSelector() {
-  const { availableBranches, selectBranch, user } = useAuth();
+  const { availableBranches, selectBranch, user, branches } = useAuth();
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
     availableBranches.length === 1 ? availableBranches[0].id : ""
   );
 
+  // Verificar se o usuário tem acesso a todas as filiais (é um admin)
+  const hasAllBranchesAccess = user?.accessibleBranches?.length === branches.length;
+
   const handleBranchSelection = () => {
     if (!selectedBranchId) return;
     selectBranch(selectedBranchId);
+  };
+
+  const handleAdminMode = () => {
+    // Aqui configuramos o "modo admin" - não selecionamos nenhuma filial específica
+    // mas marcamos o usuário como tendo acesso a visão global
+    selectBranch("admin-mode");
+    toast.success("Modo Administrador ativado. Você tem acesso a todas as filiais.");
   };
 
   if (!user || availableBranches.length === 0) return null;
@@ -30,7 +41,7 @@ export function BranchSelector() {
             Selecione uma filial
           </CardTitle>
           <CardDescription>
-            Escolha a filial que deseja acessar. Você poderá mudar essa seleção mais tarde.
+            Escolha a filial que deseja acessar ou use o modo administrador para visualizar todas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,12 +86,24 @@ export function BranchSelector() {
             ))}
           </RadioGroup>
         </CardContent>
-        <CardFooter className="flex justify-end">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-3">
+          {/* Mostrar o botão de modo admin apenas para usuários com acesso a todas as filiais */}
+          {hasAllBranchesAccess && (
+            <Button 
+              variant="outline" 
+              onClick={handleAdminMode}
+              className="w-full sm:w-auto"
+            >
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Acessar Modo Admin
+            </Button>
+          )}
           <Button 
             onClick={handleBranchSelection} 
             disabled={!selectedBranchId}
+            className="w-full sm:w-auto"
           >
-            Acessar Filial
+            Acessar Filial Selecionada
           </Button>
         </CardFooter>
       </Card>

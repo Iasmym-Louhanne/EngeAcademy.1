@@ -3,7 +3,8 @@ import { OrganizationBadge } from "./organization-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Button } from "@/components/ui/button";
-import { Bell, LogOut } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bell, LogOut, ShieldCheck } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
 
 interface DashboardHeaderProps {
@@ -30,14 +31,22 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
         <h1 className="text-2xl font-bold">{title}</h1>
         {description && <p className="text-muted-foreground">{description}</p>}
         
-        {user?.organizationType && (
-          <div className="mt-2">
+        <div className="mt-2 flex flex-wrap gap-2 items-center">
+          {user?.organizationType && (
             <OrganizationBadge
               type={user.organizationType}
               name={user.organizationName}
             />
-          </div>
-        )}
+          )}
+          
+          {/* Badge para modo admin */}
+          {user?.isAdminMode && (
+            <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 flex items-center">
+              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+              Modo Administrador
+            </Badge>
+          )}
+        </div>
       </div>
       
       <div className="flex items-center gap-3">

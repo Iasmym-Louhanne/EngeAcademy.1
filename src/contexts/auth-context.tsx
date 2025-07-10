@@ -15,6 +15,7 @@ export interface User {
   organizationName?: string;
   accessibleBranches?: string[]; // IDs das filiais que o usuário pode acessar
   currentBranch?: Branch; // Filial atualmente selecionada
+  isAdminMode?: boolean; // Indica se o usuário está no modo admin
 }
 
 // Lista de filiais
@@ -132,6 +133,7 @@ interface AuthContextType {
   selectBranch: (branchId: string) => void;
   availableBranches: Branch[];
   needsBranchSelection: boolean;
+  branches: Branch[];
 }
 
 // Criação do contexto de autenticação
@@ -166,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (
         (parsedUser.role === 'admin' || parsedUser.role === 'supervisor') && 
         !parsedUser.currentBranch && 
+        !parsedUser.isAdminMode &&
         parsedUser.accessibleBranches?.length > 0
       ) {
         setNeedsBranchSelection(true);
@@ -228,9 +231,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasPermission(user.role, permission);
   };
   
-  // Função para selecionar uma filial
+  // Função para selecionar uma filial ou ativar o modo admin
   const selectBranch = (branchId: string) => {
-    if (!user || !user.accessibleBranches?.includes(branchId)) return;
+    if (!user) return;
+    
+    // Verificar se o usuário está entrando no modo admin
+    if (branchId === "admin-mode") {
+      // Verificar se o usuário tem acesso a todas as filiais
+      const hasAllAccess = user.accessibleBranches?.length === branches.length;
+      
+      if (!hasAllAccess) {
+        console.error("Tentativa de acesso ao modo admin sem permissão");
+        return;
+      }
+      
+      const updatedUser = {
+        ...user,
+        isAdminMode: true,
+        currentBranch: undefined, // Limpar a filial selecionada
+        organizationName: "EngeAcademy (Todas as Filiais)"
+      };
+      
+      setUser(updatedUser);
+      setNeedsBranchSelection(false);
+      localStorage.setItem("engeacademy_user", JSON.stringify(updatedUser));
+      return;
+    }
+    
+    // Caso normal - selecionar uma filial específica
+    if (!user.accessibleBranches?.includes(branchId)) return;
     
     const selectedBranch = branches.find(b => b.id === branchId);
     if (!selectedBranch) return;
@@ -238,6 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updatedUser = {
       ...user,
       currentBranch: selectedBranch,
+      isAdminMode: false,
       organizationName: selectedBranch.name
     };
     
@@ -263,7 +293,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPermission: checkPermission,
       selectBranch,
       availableBranches: getAvailableBranches(),
-      needsBranchSelection
+      needsBranchSelection,
+      branches
     }}>
       {children}
     </AuthContext.Provider>
