@@ -16,6 +16,7 @@ import {
   LogOut,
   User,
   LayoutDashboard,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         title: "Usuários",
         href: "/dashboard/admin/usuarios",
         icon: <Users className="h-5 w-5" />,
+      },
+      {
+        title: "Perfis de Permissão",
+        href: "/dashboard/admin/permissoes",
+        icon: <Shield className="h-5 w-5" />,
       },
       {
         title: "Empresas",
