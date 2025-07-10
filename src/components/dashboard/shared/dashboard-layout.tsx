@@ -17,6 +17,7 @@ import {
   User,
   LayoutDashboard,
   Shield,
+  Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         title: "Financeiro",
         href: "/dashboard/admin/financeiro",
         icon: <BarChart3 className="h-5 w-5" />,
+      },
+      {
+        title: "Cupons",
+        href: "/dashboard/admin/cupons",
+        icon: <Ticket className="h-5 w-5" />,
       },
       {
         title: "Configurações",
