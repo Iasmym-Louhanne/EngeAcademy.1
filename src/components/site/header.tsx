@@ -30,33 +30,25 @@ import { useAuth } from "@/contexts/auth-context";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
 
   // Mapear o tipo de usuário para o caminho do dashboard
   const getDashboardPath = () => {
     if (!user) return "/auth/login";
     
-    // A lógica agora usa o profileId para determinar o caminho correto
-    switch (user.profileId) {
-      case 'admin':
-        return '/dashboard/admin';
-      case 'supervisor':
-        return '/dashboard/empresa';
-      case 'commercial':
-        return '/dashboard/empresa';
-      case 'support':
-        return '/dashboard/admin';
-      // Adicione um caso para 'aluno' se existir um perfil para ele
-      // Por padrão, vamos usar o que está no localStorage ou um fallback
-      default:
-        return user.currentBranch ? `/dashboard/empresa` : `/dashboard/aluno`;
-    }
+    const pathByRole: Record<string, string> = {
+      admin: '/dashboard/admin',
+      supervisor: '/dashboard/empresa',
+      commercial: '/dashboard/empresa',
+      support: '/dashboard/admin',
+    };
+    return pathByRole[user.profileId || ''] ?? '/dashboard/aluno';
   };
 
   // Obter as iniciais do nome do usuário para o avatar
   const getInitials = () => {
-    if (!user?.name) return "?";
-    return user.name
+    if (!profile?.full_name) return "?";
+    return profile.full_name
       .split(" ")
       .map((n) => n[0])
       .join("")
@@ -103,7 +95,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/images/avatar.png" alt="Avatar" />
+                    <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || "Avatar"} />
                     <AvatarFallback>{getInitials()}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -111,7 +103,7 @@ export function Header() {
               <DropdownMenuContent align="end">
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">{profile?.full_name}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
@@ -164,7 +156,7 @@ export function Header() {
               </div>
               {user && (
                 <div className="flex flex-col space-y-1 mb-6 pb-6 border-b">
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{profile?.full_name}</p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               )}

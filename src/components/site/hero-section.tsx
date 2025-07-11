@@ -12,7 +12,7 @@ export function HeroSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tighter mb-6">
-              Treinamentos Especializados para Indústria e Construção
+              Treinamentos Especializados em Saúde e Segurança do Trabalho
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
               Capacite sua equipe com cursos atualizados que atendem às normas

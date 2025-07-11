@@ -42,7 +42,7 @@ type DashboardLayoutProps = {
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
 
   // Detectar se estamos em um dispositivo móvel
@@ -240,10 +240,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             )}
           >
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/images/avatar.png" />
+              <AvatarImage src={profile?.avatar_url} />
               <AvatarFallback>
-                {user?.name
-                  ? user.name
+                {profile?.full_name
+                  ? profile.full_name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
@@ -254,7 +254,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             </Avatar>
             {isSidebarOpen && (
               <div className="ml-3">
-                <p className="text-sm font-medium">{user?.name || "Usuário"}</p>
+                <p className="text-sm font-medium">{profile?.full_name || "Usuário"}</p>
                 <button
                   onClick={logout}
                   className="text-xs text-muted-foreground flex items-center hover:text-primary"
@@ -314,10 +314,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           <div className="border-t p-4">
             <div className="flex items-center">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/images/avatar.png" />
+                <AvatarImage src={profile?.avatar_url} />
                 <AvatarFallback>
-                  {user?.name
-                    ? user.name
+                  {profile?.full_name
+                    ? profile.full_name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")
@@ -327,7 +327,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium">{user?.name || "Usuário"}</p>
+                <p className="text-sm font-medium">{profile?.full_name || "Usuário"}</p>
                 <button
                   onClick={logout}
                   className="text-xs text-muted-foreground flex items-center hover:text-primary"

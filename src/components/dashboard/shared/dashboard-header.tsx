@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, LogOut, ShieldCheck } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
+import { getProfileById } from "@/lib/permission-service";
 
 interface DashboardHeaderProps {
   title: string;
@@ -13,11 +14,11 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
 
   const getInitials = () => {
-    if (!user?.name) return "?";
-    return user.name
+    if (!profile?.full_name) return "?";
+    return profile.full_name
       .split(" ")
       .map((n) => n[0])
       .join("")
@@ -66,13 +67,13 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
         
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/images/avatar.png" alt={user?.name || "Avatar"} />
+            <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || "Avatar"} />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
           
           <div className="hidden md:block">
-            <p className="text-sm font-medium">{user?.name}</p>
-            <p className="text-xs text-muted-foreground">{user?.role}</p>
+            <p className="text-sm font-medium">{profile?.full_name}</p>
+            <p className="text-xs text-muted-foreground">{getProfileById(user?.profileId || '')?.name || user?.profileId}</p>
           </div>
           
           <Button variant="ghost" size="icon" onClick={logout}>
