@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
 import { corsHeaders } from '../_shared/cors.ts'
@@ -9,7 +8,7 @@ async function fetchImage(url: string) {
   return await response.arrayBuffer();
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -24,11 +23,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Validação de segurança: Verificar se o usuário realmente concluiu o curso.
-    // Esta lógica deve ser implementada de acordo com as regras do seu negócio.
-    // Ex: const { data: attempt, error } = await supabaseAdmin.from('quiz_attempts').select('id').eq('user_id', userId).eq('course_id', courseId).eq('passed', true).limit(1).single();
-    // if (error || !attempt) throw new Error("Usuário não tem permissão para gerar este certificado.");
 
     const { data: userData, error: userError } = await supabaseAdmin.from('users').select('raw_user_meta_data').eq('id', userId).single();
     if (userError) throw userError;

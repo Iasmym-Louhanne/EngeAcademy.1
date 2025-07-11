@@ -21,7 +21,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Convidar o usuário para o sistema de autenticação
     const { data: authUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: {
         full_name: full_name,
@@ -29,21 +28,19 @@ Deno.serve(async (req) => {
     });
 
     if (inviteError) {
-      // Tratar erro comum de usuário já existente
       if (inviteError.message.includes("User already registered")) {
         return new Response(JSON.stringify({ error: 'Este email já está cadastrado no sistema.' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 409, // Conflict
+          status: 409,
         });
       }
       throw inviteError;
     }
 
-    // Criar o registro na tabela de usuários internos
     const { error: dbError } = await supabaseAdmin
       .from('internal_users')
       .insert({
-        id: authUser.user.id, // Usar o mesmo ID do usuário de autenticação
+        id: authUser.user.id,
         email: email,
         full_name: full_name,
         profile_id: profile_id,
@@ -53,8 +50,6 @@ Deno.serve(async (req) => {
       });
 
     if (dbError) {
-      // Se a inserção no banco falhar, idealmente deveríamos deletar o usuário convidado para evitar inconsistência.
-      // await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw dbError;
     }
 
