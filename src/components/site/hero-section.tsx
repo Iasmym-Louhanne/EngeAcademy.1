@@ -5,7 +5,7 @@ export function HeroSection() {
   return (
     <div className="relative">
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20" />
+      <div className="absolute inset-0 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-950/30 dark:to-emerald-950/30" />
       
       {/* Content */}
       <div className="container relative py-20 md:py-32 px-4 md:px-6 lg:px-8">
@@ -43,20 +43,20 @@ export function HeroSection() {
         
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 text-center">
-          <div className="bg-background rounded-lg p-6 shadow-sm">
-            <p className="text-3xl font-bold">2000+</p>
+          <div className="bg-background/70 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+            <p className="text-3xl font-bold text-primary">2000+</p>
             <p className="text-muted-foreground">Alunos Certificados</p>
           </div>
-          <div className="bg-background rounded-lg p-6 shadow-sm">
-            <p className="text-3xl font-bold">50+</p>
+          <div className="bg-background/70 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+            <p className="text-3xl font-bold text-primary">50+</p>
             <p className="text-muted-foreground">Empresas Parceiras</p>
           </div>
-          <div className="bg-background rounded-lg p-6 shadow-sm">
-            <p className="text-3xl font-bold">12+</p>
+          <div className="bg-background/70 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+            <p className="text-3xl font-bold text-primary">12+</p>
             <p className="text-muted-foreground">Cursos Especializados</p>
           </div>
-          <div className="bg-background rounded-lg p-6 shadow-sm">
-            <p className="text-3xl font-bold">98%</p>
+          <div className="bg-background/70 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+            <p className="text-3xl font-bold text-primary">98%</p>
             <p className="text-muted-foreground">Satisfação dos Clientes</p>
           </div>
         </div>
