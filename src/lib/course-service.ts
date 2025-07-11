@@ -95,7 +95,7 @@ export async function getCourseWithModules(id: string) {
       .from("course_modules")
       .select("*")
       .eq("course_id", id)
-      .order("order", { ascending: true });
+      .order("order_index", { ascending: true });
 
     if (modulesError) {
       console.error(`Error fetching modules for course ${id}:`, modulesError);
@@ -122,7 +122,7 @@ export async function getCourseWithModulesAndLessons(id: string) {
           .from("lessons")
           .select("*")
           .eq("module_id", module.id)
-          .order("order", { ascending: true });
+          .order("order_index", { ascending: true });
 
         if (error) {
           console.error(`Error fetching lessons for module ${module.id}:`, error);
@@ -148,7 +148,15 @@ export async function getCourseWithModulesAndLessons(id: string) {
 
 export async function createCourse(courseData: Omit<Course, "id" | "created_at" | "updated_at">) {
   try {
+    // Verificar se o usuário está autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      throw new Error("Usuário não autenticado. Faça login novamente.");
+    }
+
     console.log("Creating course with data:", courseData);
+    console.log("Authenticated user:", user.id);
     
     // Garantir que os campos obrigatórios estão presentes
     const courseToInsert = {
@@ -162,6 +170,8 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
       category: courseData.category || '',
       tags: courseData.tags || []
     };
+
+    console.log("Data to insert:", courseToInsert);
 
     const { data, error } = await supabase
       .from("courses")
@@ -229,7 +239,7 @@ export async function getModulesByCourse(courseId: string) {
       .from("course_modules")
       .select("*")
       .eq("course_id", courseId)
-      .order("order", { ascending: true });
+      .order("order_index", { ascending: true });
 
     if (error) {
       console.error(`Error fetching modules for course ${courseId}:`, error);
@@ -310,7 +320,7 @@ export async function getLessonsByModule(moduleId: string) {
       .from("lessons")
       .select("*")
       .eq("module_id", moduleId)
-      .order("order", { ascending: true });
+      .order("order_index", { ascending: true });
 
     if (error) {
       console.error(`Error fetching lessons for module ${moduleId}:`, error);
@@ -380,6 +390,41 @@ export async function deleteLesson(id: string) {
     return true;
   } catch (error) {
     console.error("Error in deleteLesson:", error);
+    throw error;
+  }
+}
+
+// Funções para reordenar
+export async function reorderModules(modules: { id: string; order_index: number }[]) {
+  try {
+    const updates = modules.map(({ id, order_index }) => 
+      supabase
+        .from("course_modules")
+        .update({ order_index })
+        .eq("id", id)
+    );
+
+    await Promise.all(updates);
+    return true;
+  } catch (error) {
+    console.error("Error reordering modules:", error);
+    throw error;
+  }
+}
+
+export async function reorderLessons(lessons: { id: string; order_index: number }[]) {
+  try {
+    const updates = lessons.map(({ id, order_index }) => 
+      supabase
+        .from("lessons")
+        .update({ order_index })
+        .eq("id", id)
+    );
+
+    await Promise.all(updates);
+    return true;
+  } catch (error) {
+    console.error("Error reordering lessons:", error);
     throw error;
   }
 }
