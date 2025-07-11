@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { generateCertificate } from '@/lib/certificate-generator';
+import { useAuth } from '@/contexts/auth-context';
 
 // Definir tipagem para o objeto de curso
 interface Course {
@@ -49,6 +50,7 @@ const courseStructure: Record<string, Array<{
 };
 
 export default function TrainingPage({ params }: { params: { slug: string } }) {
+  const { user, profile } = useAuth();
   const course = courses.find((c: Course) => c.slug === params.slug);
   const structure = courseStructure[params.slug as keyof typeof courseStructure] || [];
 
@@ -91,8 +93,7 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
     toast.loading("Gerando seu certificado...");
     
     try {
-        // Em uma aplicação real, você obteria estes dados da sessão e do banco de dados
-        const studentName = "Aluno Exemplo";
+        const studentName = profile?.full_name || "Aluno";
         const completionDate = new Date().toLocaleDateString('pt-BR');
         
         const pdfUrl = await generateCertificate({
@@ -100,6 +101,7 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
             courseName: course.title,
             completionDate,
             courseId: course.id,
+            userId: user?.id,
         });
 
         toast.dismiss();

@@ -1,11 +1,13 @@
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GenerateCertificateParams {
   studentName: string;
   courseName: string;
   completionDate: string;
   courseId: string;
+  userId?: string;
 }
 
 export async function generateCertificate({
@@ -13,6 +15,7 @@ export async function generateCertificate({
   courseName,
   completionDate,
   courseId,
+  userId,
 }: GenerateCertificateParams): Promise<string> {
   try {
     // Criar um novo documento PDF (A4 paisagem)
@@ -86,11 +89,30 @@ export async function generateCertificate({
     doc.setTextColor(120, 120, 120);
     doc.text(`Código de Autenticação: ${authCode}`, 15, pageHeight - 15);
     
+    // Salvar certificado no banco de dados se userId for fornecido
+    if (userId) {
+      try {
+        const { error } = await supabase
+          .from('certificates')
+          .insert({
+            user_id: userId,
+            course_id: courseId,
+            authentication_code: authCode,
+            pdf_url: null, // Por enquanto, não salvamos o PDF
+          });
+        
+        if (error) {
+          console.error('Erro ao salvar certificado no banco:', error);
+        }
+      } catch (dbError) {
+        console.error('Erro de conexão com banco:', dbError);
+        // Não falha a geração do PDF por causa de erro no banco
+      }
+    }
+    
     // Salvar PDF e retornar como URL de dados
     const pdfOutput = doc.output('datauristring');
-
-    // Em um sistema real, você enviaria esse PDF para o backend para armazenamento
-    // e registro no banco de dados
+    
     console.log(`Certificado gerado para ${studentName} - Curso: ${courseId}`);
     
     return pdfOutput;
