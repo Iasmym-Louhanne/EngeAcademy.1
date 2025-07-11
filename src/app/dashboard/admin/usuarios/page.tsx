@@ -15,24 +15,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
-import { User, branches as allBranches, testUsers } from "@/contexts/auth-context";
+import { InternalUser, branches as allBranches, internalUsers } from "@/lib/mock-data";
 import { getInternalPermissionProfiles, getProfileById } from "@/lib/permission-service";
 import { Plus, Search, Edit, Trash2, ShieldCheck, GitBranch } from "lucide-react";
 
 export default function InternalUsersPage() {
-  const [users, setUsers] = useState<User[]>(testUsers);
+  const [users, setUsers] = useState<InternalUser[]>(internalUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<InternalUser | null>(null);
   
   const permissionProfiles = getInternalPermissionProfiles();
 
-  const handleOpenModal = (user: User | null = null) => {
+  const handleOpenModal = (user: InternalUser | null = null) => {
     setEditingUser(user);
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = (userData: User) => {
+  const handleSaveUser = (userData: InternalUser) => {
     if (editingUser) {
       setUsers(users.map(u => u.id === userData.id ? userData : u));
       toast.success("Usuário atualizado com sucesso!");
@@ -149,8 +149,8 @@ export default function InternalUsersPage() {
 }
 
 // Componente do Modal de Formulário de Usuário
-function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: User | null, onClose: () => void, onSave: (user: User) => void, profiles: any[], branches: any[] }) {
-  const [formData, setFormData] = useState<Partial<User>>(
+function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: InternalUser | null, onClose: () => void, onSave: (user: InternalUser) => void, profiles: any[], branches: any[] }) {
+  const [formData, setFormData] = useState<Partial<InternalUser>>(
     user || { isActive: true, hasFullAccess: false, accessibleBranches: [] }
   );
 
@@ -163,7 +163,7 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: Us
       toast.error("Selecione ao menos uma filial ou conceda acesso total.");
       return;
     }
-    onSave(formData as User);
+    onSave(formData as InternalUser);
   };
 
   const handleBranchChange = (branchId: string, checked: boolean) => {

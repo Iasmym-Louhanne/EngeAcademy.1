@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Branch } from "@/lib/permissions";
-import { branches as initialBranches } from "@/contexts/auth-context";
+import { branches as initialBranches } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
 import { Building2, Edit, MapPin, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";

@@ -101,10 +101,10 @@ export const employees = [
 ];
 
 export const branches = [
-  { id: '1', name: 'São Paulo', employees: 120, courses: 18, address: 'Av. Paulista, 1000' },
-  { id: '2', name: 'Rio de Janeiro', employees: 85, courses: 12, address: 'Av. Rio Branco, 500' },
-  { id: '3', name: 'Belo Horizonte', employees: 65, courses: 10, address: 'Av. Afonso Pena, 2000' },
-  { id: '4', name: 'Salvador', employees: 45, courses: 8, address: 'Av. Tancredo Neves, 1500' }
+  { id: '1', name: 'São Paulo', city: 'São Paulo', state: 'SP', address: 'Av. Paulista, 1000', manager: 'Gerente SP', email: 'sp@enge.com', phone: '111', isActive: true },
+  { id: '2', name: 'Rio de Janeiro', city: 'Rio de Janeiro', state: 'RJ', address: 'Av. Rio Branco, 500', manager: 'Gerente RJ', email: 'rj@enge.com', phone: '222', isActive: true },
+  { id: '3', name: 'Belo Horizonte', city: 'Belo Horizonte', state: 'MG', address: 'Av. Afonso Pena, 2000', manager: 'Gerente BH', email: 'bh@enge.com', phone: '333', isActive: true },
+  { id: '4', name: 'Salvador', city: 'Salvador', state: 'BA', address: 'Av. Tancredo Neves, 1500', manager: 'Gerente SSA', email: 'ssa@enge.com', phone: '444', isActive: false }
 ];
 
 export const companies = [
@@ -197,4 +197,21 @@ export const salesData = [
   { month: 'Out', revenue: 29000 },
   { month: 'Nov', revenue: 33000 },
   { month: 'Dez', revenue: 38000 }
+];
+
+export interface InternalUser {
+  id: string;
+  name: string;
+  email: string;
+  profileId: string; // 'admin', 'supervisor', 'commercial', 'support'
+  isActive: boolean;
+  hasFullAccess: boolean;
+  accessibleBranches: string[]; // Array de IDs de filiais
+}
+
+export const internalUsers: InternalUser[] = [
+  { id: '1', name: 'Admin Geral', email: 'admin@engeacademy.com', profileId: 'admin', isActive: true, hasFullAccess: true, accessibleBranches: [] },
+  { id: '2', name: 'Supervisor SP', email: 'supervisor.sp@engeacademy.com', profileId: 'supervisor', isActive: true, hasFullAccess: false, accessibleBranches: ['1'] },
+  { id: '3', name: 'Vendedor', email: 'vendedor@engeacademy.com', profileId: 'commercial', isActive: true, hasFullAccess: false, accessibleBranches: ['1', '2'] },
+  { id: '4', name: 'Suporte N1', email: 'suporte@engeacademy.com', profileId: 'support', isActive: false, hasFullAccess: false, accessibleBranches: ['3'] },
 ];
