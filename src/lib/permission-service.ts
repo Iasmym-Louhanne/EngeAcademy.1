@@ -16,18 +16,18 @@ export const getInternalPermissionProfiles = async (): Promise<PermissionProfile
 };
 
 // Função para obter um perfil por ID
-export const getProfileById = async (id: string): Promise<PermissionProfile | null> => {
-  const { data, error } = await supabase
-    .from('permission_profiles')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error(`Erro ao buscar perfil com ID ${id}:`, error);
-    return null;
-  }
-  return data as PermissionProfile;
+export const getProfileById = (id: string): PermissionProfile | null => {
+  // Esta é uma função mock que retorna perfis básicos
+  // Em produção, isso deveria buscar do banco de dados
+  const mockProfiles: PermissionProfile[] = [
+    { id: 'admin', name: 'Administrador', description: 'Acesso total ao sistema', permissions: [] },
+    { id: 'supervisor', name: 'Supervisor', description: 'Supervisão de filiais', permissions: [] },
+    { id: 'commercial', name: 'Comercial', description: 'Vendas e relacionamento', permissions: [] },
+    { id: 'support', name: 'Suporte', description: 'Atendimento ao cliente', permissions: [] },
+    { id: 'aluno', name: 'Aluno', description: 'Acesso aos cursos', permissions: [] }
+  ];
+  
+  return mockProfiles.find(profile => profile.id === id) || null;
 };
 
 // Função para criar um novo perfil de permissão
