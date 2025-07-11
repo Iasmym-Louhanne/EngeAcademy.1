@@ -107,7 +107,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(fullUser);
 
           if (event === 'SIGNED_IN' && pathname === '/auth/login') {
-            const redirectPath = fullUser?.profileId === 'admin' ? '/dashboard/admin' : '/dashboard/aluno';
+            const pathByRole: Record<string, string> = {
+              admin: '/dashboard/admin',
+              supervisor: '/dashboard/empresa',
+              commercial: '/dashboard/empresa',
+              support: '/dashboard/admin',
+            };
+            const redirectPath = pathByRole[fullUser?.profileId || ''] ?? '/dashboard/aluno';
             router.push(redirectPath);
           }
         } else {
