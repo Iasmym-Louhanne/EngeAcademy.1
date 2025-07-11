@@ -100,12 +100,25 @@ const permissionCategories: { title: string; icon: React.ReactNode; permissions:
 
 export default function PermissionProfilesPage() {
   const [profiles, setProfiles] = useState<PermissionProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<PermissionProfile | null>(null);
 
+  const fetchProfiles = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getInternalPermissionProfiles();
+      setProfiles(data);
+    } catch (error) {
+      toast.error("Falha ao carregar perfis de permissão.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setProfiles(getInternalPermissionProfiles());
+    fetchProfiles();
   }, []);
 
   const handleOpenModal = (profile: PermissionProfile | null = null) => {
@@ -113,24 +126,32 @@ export default function PermissionProfilesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveProfile = (profileData: Omit<PermissionProfile, 'id'> | PermissionProfile) => {
-    if ('id' in profileData) {
-      updatePermissionProfile(profileData.id, profileData);
-      toast.success("Perfil atualizado com sucesso!");
-    } else {
-      createPermissionProfile(profileData);
-      toast.success("Perfil criado com sucesso!");
+  const handleSaveProfile = async (profileData: Omit<PermissionProfile, 'id' | 'created_at'> | PermissionProfile) => {
+    try {
+      if ('id' in profileData) {
+        await updatePermissionProfile(profileData.id, profileData);
+        toast.success("Perfil atualizado com sucesso!");
+      } else {
+        await createPermissionProfile(profileData);
+        toast.success("Perfil criado com sucesso!");
+      }
+      fetchProfiles(); // Recarregar perfis
+      setIsModalOpen(false);
+      setEditingProfile(null);
+    } catch (error) {
+      toast.error("Falha ao salvar o perfil.");
     }
-    setProfiles(getInternalPermissionProfiles());
-    setIsModalOpen(false);
-    setEditingProfile(null);
   };
 
-  const handleDeleteProfile = (profileId: string) => {
+  const handleDeleteProfile = async (profileId: string) => {
     if (confirm("Tem certeza que deseja excluir este perfil? Usuários associados a ele perderão suas permissões.")) {
-      deletePermissionProfile(profileId);
-      setProfiles(getInternalPermissionProfiles());
-      toast.success("Perfil excluído com sucesso!");
+      try {
+        await deletePermissionProfile(profileId);
+        fetchProfiles(); // Recarregar perfis
+        toast.success("Perfil excluído com sucesso!");
+      } catch (error) {
+        toast.error("Falha ao excluir o perfil.");
+      }
     }
   };
 
@@ -171,40 +192,44 @@ export default function PermissionProfilesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollableTable>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome do Perfil</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Permissões</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProfiles.map(profile => (
-                  <TableRow key={profile.id}>
-                    <TableCell className="font-medium">{profile.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{profile.description}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{profile.permissions.length} permissões</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenModal(profile)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteProfile(profile.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="text-center py-8">Carregando perfis...</div>
+            ) : (
+              <ScrollableTable>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome do Perfil</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Permissões</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </ScrollableTable>
+                </TableHeader>
+                <TableBody>
+                  {filteredProfiles.map(profile => (
+                    <TableRow key={profile.id}>
+                      <TableCell className="font-medium">{profile.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{profile.description}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{profile.permissions.length} permissões</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenModal(profile)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteProfile(profile.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </ScrollableTable>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -228,9 +253,9 @@ function PermissionProfileFormModal({
 }: {
   profile: PermissionProfile | null;
   onClose: () => void;
-  onSave: (data: Omit<PermissionProfile, 'id'> | PermissionProfile) => void;
+  onSave: (data: Omit<PermissionProfile, 'id' | 'created_at'> | PermissionProfile) => void;
 }) {
-  const [formData, setFormData] = useState<Omit<PermissionProfile, 'id'> | PermissionProfile>(
+  const [formData, setFormData] = useState<Omit<PermissionProfile, 'id' | 'created_at'> | PermissionProfile>(
     profile || { name: "", description: "", permissions: [] }
   );
 

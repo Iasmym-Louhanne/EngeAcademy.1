@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/shared/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,38 +15,80 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
-import { InternalUser, branches as allBranches, internalUsers } from "@/lib/mock-data";
-import { getInternalPermissionProfiles, getProfileById } from "@/lib/permission-service";
+import { InternalUser, createInternalUser, getInternalUsers, updateInternalUser, deleteInternalUser } from "@/lib/user-service";
+import { PermissionProfile, getInternalPermissionProfiles } from "@/lib/permission-service";
+import { Branch } from "@/lib/permissions";
+import { branches as allBranches } from "@/lib/mock-data";
 import { Plus, Search, Edit, Trash2, ShieldCheck, GitBranch } from "lucide-react";
 
 export default function InternalUsersPage() {
-  const [users, setUsers] = useState<InternalUser[]>(internalUsers);
+  const [users, setUsers] = useState<InternalUser[]>([]);
+  const [permissionProfiles, setPermissionProfiles] = useState<PermissionProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<InternalUser | null>(null);
-  
-  const permissionProfiles = getInternalPermissionProfiles();
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [usersData, profilesData] = await Promise.all([
+        getInternalUsers(),
+        getInternalPermissionProfiles()
+      ]);
+      setUsers(usersData);
+      setPermissionProfiles(profilesData);
+    } catch (error) {
+      toast.error("Falha ao carregar dados.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleOpenModal = (user: InternalUser | null = null) => {
     setEditingUser(user);
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = (userData: InternalUser) => {
-    if (editingUser) {
-      setUsers(users.map(u => u.id === userData.id ? userData : u));
-      toast.success("Usuário atualizado com sucesso!");
-    } else {
-      const newUser = { ...userData, id: `user-${Date.now()}` };
-      setUsers([...users, newUser]);
-      toast.success("Usuário adicionado com sucesso!");
+  const handleSaveUser = async (userData: Partial<InternalUser>) => {
+    try {
+      if (editingUser) {
+        await updateInternalUser(editingUser.id, userData);
+        toast.success("Usuário atualizado com sucesso!");
+      } else {
+        await createInternalUser(userData as Omit<InternalUser, 'id' | 'created_at'>);
+        toast.success("Usuário adicionado com sucesso!");
+      }
+      fetchData();
+      setIsModalOpen(false);
+      setEditingUser(null);
+    } catch (error) {
+      toast.error("Falha ao salvar usuário.");
     }
-    setIsModalOpen(false);
-    setEditingUser(null);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm("Tem certeza que deseja excluir este usuário?")) {
+      try {
+        await deleteInternalUser(userId);
+        fetchData();
+        toast.success("Usuário excluído com sucesso!");
+      } catch (error) {
+        toast.error("Falha ao excluir usuário.");
+      }
+    }
+  };
+
+  const getProfileNameById = (profileId: string) => {
+    return permissionProfiles.find(p => p.id === profileId)?.name || 'N/A';
   };
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -80,57 +122,61 @@ export default function InternalUsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollableTable>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Perfil de Permissão</TableHead>
-                  <TableHead>Acesso</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                    </TableCell>
-                    <TableCell>{getProfileById(user.profileId)?.name || 'N/A'}</TableCell>
-                    <TableCell>
-                      {user.hasFullAccess ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                          <ShieldCheck className="mr-1 h-3 w-3" />
-                          Acesso Total
-                        </Badge>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {user.accessibleBranches.map(branchId => (
-                            <Badge key={branchId} variant="secondary">
-                              {allBranches.find(b => b.id === branchId)?.name || 'Desconhecida'}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.isActive ? "success" : "destructive"}>
-                        {user.isActive ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenModal(user)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="text-center py-8">Carregando usuários...</div>
+            ) : (
+              <ScrollableTable>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Perfil de Permissão</TableHead>
+                    <TableHead>Acesso</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </ScrollableTable>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="font-medium">{user.full_name}</div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                      </TableCell>
+                      <TableCell>{getProfileNameById(user.profile_id)}</TableCell>
+                      <TableCell>
+                        {user.has_full_access ? (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                            <ShieldCheck className="mr-1 h-3 w-3" />
+                            Acesso Total
+                          </Badge>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {user.accessible_branches.map(branchId => (
+                              <Badge key={branchId} variant="secondary">
+                                {allBranches.find(b => b.id === branchId)?.name || 'Desconhecida'}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.is_active ? "success" : "destructive"}>
+                          {user.is_active ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenModal(user)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteUser(user.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </ScrollableTable>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -149,29 +195,29 @@ export default function InternalUsersPage() {
 }
 
 // Componente do Modal de Formulário de Usuário
-function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: InternalUser | null, onClose: () => void, onSave: (user: InternalUser) => void, profiles: any[], branches: any[] }) {
+function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: InternalUser | null, onClose: () => void, onSave: (user: Partial<InternalUser>) => void, profiles: PermissionProfile[], branches: Branch[] }) {
   const [formData, setFormData] = useState<Partial<InternalUser>>(
-    user || { isActive: true, hasFullAccess: false, accessibleBranches: [] }
+    user || { is_active: true, has_full_access: false, accessible_branches: [] }
   );
 
   const handleSave = () => {
-    if (!formData.name || !formData.email || !formData.profileId) {
+    if (!formData.full_name || !formData.email || !formData.profile_id) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    if (!formData.hasFullAccess && formData.accessibleBranches?.length === 0) {
+    if (!formData.has_full_access && (!formData.accessible_branches || formData.accessible_branches.length === 0)) {
       toast.error("Selecione ao menos uma filial ou conceda acesso total.");
       return;
     }
-    onSave(formData as InternalUser);
+    onSave(formData);
   };
 
   const handleBranchChange = (branchId: string, checked: boolean) => {
-    const currentBranches = formData.accessibleBranches || [];
+    const currentBranches = formData.accessible_branches || [];
     if (checked) {
-      setFormData({ ...formData, accessibleBranches: [...currentBranches, branchId] });
+      setFormData({ ...formData, accessible_branches: [...currentBranches, branchId] });
     } else {
-      setFormData({ ...formData, accessibleBranches: currentBranches.filter(id => id !== branchId) });
+      setFormData({ ...formData, accessible_branches: currentBranches.filter(id => id !== branchId) });
     }
   };
 
@@ -188,7 +234,7 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome</Label>
-              <Input id="name" value={formData.name || ""} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              <Input id="name" value={formData.full_name || ""} onChange={e => setFormData({ ...formData, full_name: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -197,7 +243,7 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
           </div>
           <div className="space-y-2">
             <Label htmlFor="profile">Perfil de Permissão</Label>
-            <Select value={formData.profileId} onValueChange={value => setFormData({ ...formData, profileId: value })}>
+            <Select value={formData.profile_id} onValueChange={value => setFormData({ ...formData, profile_id: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um perfil" />
               </SelectTrigger>
@@ -211,8 +257,8 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
           <div className="space-y-3 rounded-md border p-4">
             <Label>Acesso às Filiais</Label>
             <RadioGroup
-              value={formData.hasFullAccess ? "full" : "specific"}
-              onValueChange={value => setFormData({ ...formData, hasFullAccess: value === "full" })}
+              value={formData.has_full_access ? "full" : "specific"}
+              onValueChange={value => setFormData({ ...formData, has_full_access: value === "full" })}
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="full" id="full" />
@@ -227,13 +273,13 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
                 </Label>
               </div>
             </RadioGroup>
-            {!formData.hasFullAccess && (
+            {!formData.has_full_access && (
               <div className="grid grid-cols-2 gap-2 pt-2 pl-6 max-h-32 overflow-y-auto">
                 {branches.map(branch => (
                   <div key={branch.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`branch-${branch.id}`}
-                      checked={formData.accessibleBranches?.includes(branch.id)}
+                      checked={formData.accessible_branches?.includes(branch.id)}
                       onCheckedChange={(checked) => handleBranchChange(branch.id, !!checked)}
                     />
                     <Label htmlFor={`branch-${branch.id}`} className="font-normal">{branch.name}</Label>
@@ -243,7 +289,7 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <Switch id="isActive" checked={formData.isActive} onCheckedChange={checked => setFormData({ ...formData, isActive: checked })} />
+            <Switch id="isActive" checked={formData.is_active} onCheckedChange={checked => setFormData({ ...formData, is_active: !!checked })} />
             <Label htmlFor="isActive">Usuário Ativo</Label>
           </div>
         </div>

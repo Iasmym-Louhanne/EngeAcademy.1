@@ -4,9 +4,11 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { Permission } from "@/lib/permissions";
 
 interface ExtendedUser extends SupabaseUser {
   profileId?: string;
+  permissions?: Permission[];
 }
 
 export interface UserProfile {
@@ -14,7 +16,6 @@ export interface UserProfile {
   full_name: string;
   avatar_url: string;
   profile_id?: string;
-  currentBranch?: string; // Inclua isso se for usado nos dashboards
 }
 
 interface AuthContextType {
@@ -42,23 +43,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchUserPermissions = async (userId: string): Promise<ExtendedUser | null> => {
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      return null;
+    }
+
+    setProfile(userProfile);
+
+    // Se for um usuário interno, buscar permissões
+    if (userProfile.profile_id && userProfile.profile_id !== 'aluno') {
+      const { data: internalUser, error: internalUserError } = await supabase
+        .from('internal_users')
+        .select('profile_id')
+        .eq('email', userProfile.email) // ou usar ID se for o mesmo
+        .single();
+
+      if (internalUser && !internalUserError) {
+        const { data: permissionProfile, error: permError } = await supabase
+          .from('permission_profiles')
+          .select('permissions')
+          .eq('id', internalUser.profile_id)
+          .single();
+        
+        if (permissionProfile && !permError) {
+          return {
+            ...user,
+            profileId: userProfile.profile_id,
+            permissions: permissionProfile.permissions as Permission[],
+          };
+        }
+      }
+    }
+
+    // Retornar usuário sem permissões especiais (aluno)
+    return {
+      ...user,
+      profileId: userProfile.profile_id,
+      permissions: [],
+    };
+  };
+
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        setProfile(userProfile ?? null);
-
-        setUser({
-          ...session.user,
-          profileId: userProfile?.profile_id ?? undefined,
-        });
+        const fullUser = await fetchUserPermissions(session.user.id);
+        setUser(fullUser);
       } else {
         setUser(null);
         setProfile(null);
@@ -72,42 +109,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          setProfile(userProfile ?? null);
-
-          setUser({
-            ...session.user,
-            profileId: userProfile?.profile_id ?? undefined,
-          });
+          const fullUser = await fetchUserPermissions(session.user.id);
+          setUser(fullUser);
 
           if (event === 'SIGNED_IN' && pathname === '/auth/login') {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('profile_id')
-            .eq('id', session.user.id)
-            .single();
-
-          const profileId = profileData?.profile_id;
-
-          const pathByRole: Record<string, string> = {
-            admin: '/dashboard/admin',
-            supervisor: '/dashboard/empresa',
-            commercial: '/dashboard/empresa',
-            support: '/dashboard/admin',
-          };
-
-          const redirectPath = pathByRole[profileId] ?? '/dashboard/aluno';
-          router.push(redirectPath);
+            const redirectPath = fullUser?.profileId === 'admin' ? '/dashboard/admin' : '/dashboard/aluno';
+            router.push(redirectPath);
+          }
+        } else {
+          setUser(null);
+          setProfile(null);
         }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
       }
     );
 

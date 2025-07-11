@@ -42,6 +42,7 @@ export interface PermissionProfile {
   name: string;
   description: string;
   permissions: Permission[];
+  created_at?: string;
 }
 
 // Interface para uma Filial
@@ -55,4 +56,23 @@ export interface Branch {
   email?: string;
   manager?: string;
   isActive: boolean;
+}
+
+/**
+ * Verifica se um usuário possui uma permissão específica.
+ * @param userPermissions - Array de permissões do usuário.
+ * @param requiredPermission - A permissão necessária.
+ * @returns `true` se o usuário tiver a permissão, caso contrário `false`.
+ */
+export function hasPermission(
+  userPermissions: Permission[] | null | undefined,
+  requiredPermission: Permission
+): boolean {
+  if (!userPermissions) {
+    return false;
+  }
+  
+  // O administrador pode ter uma permissão "catch-all" ou simplesmente todas as permissões.
+  // Por enquanto, uma verificação simples é suficiente.
+  return userPermissions.includes(requiredPermission);
 }
