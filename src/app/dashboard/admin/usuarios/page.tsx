@@ -15,11 +15,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
-import { InternalUser, createInternalUser, getInternalUsers, updateInternalUser, deleteInternalUser } from "@/lib/user-service";
+import { InternalUser, getInternalUsers, updateInternalUser, deleteInternalUser } from "@/lib/user-service";
 import { PermissionProfile, getInternalPermissionProfiles } from "@/lib/permission-service";
 import { Branch } from "@/lib/permissions";
 import { branches as allBranches } from "@/lib/mock-data";
 import { Plus, Search, Edit, Trash2, ShieldCheck, GitBranch } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function InternalUsersPage() {
   const [users, setUsers] = useState<InternalUser[]>([]);
@@ -57,17 +58,27 @@ export default function InternalUsersPage() {
   const handleSaveUser = async (userData: Partial<InternalUser>) => {
     try {
       if (editingUser) {
+        // Lógica de atualização
         await updateInternalUser(editingUser.id, userData);
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        await createInternalUser(userData as Omit<InternalUser, 'id' | 'created_at'>);
-        toast.success("Usuário adicionado com sucesso!");
+        // Lógica de criação via Edge Function
+        const { error } = await supabase.functions.invoke('invite-user', {
+          body: userData,
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        toast.success("Convite enviado com sucesso para o novo usuário!");
       }
       fetchData();
       setIsModalOpen(false);
       setEditingUser(null);
-    } catch (error) {
-      toast.error("Falha ao salvar usuário.");
+    } catch (error: any) {
+      console.error("Erro ao salvar usuário:", error);
+      toast.error(`Falha ao salvar usuário: ${error.message}`);
     }
   };
 
@@ -199,8 +210,9 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
   const [formData, setFormData] = useState<Partial<InternalUser>>(
     user || { is_active: true, has_full_access: false, accessible_branches: [] }
   );
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.full_name || !formData.email || !formData.profile_id) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
@@ -209,7 +221,10 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
       toast.error("Selecione ao menos uma filial ou conceda acesso total.");
       return;
     }
-    onSave(formData);
+    
+    setIsSaving(true);
+    await onSave(formData);
+    setIsSaving(false);
   };
 
   const handleBranchChange = (branchId: string, checked: boolean) => {
@@ -225,20 +240,24 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>{user ? "Editar Usuário" : "Adicionar Usuário"}</DialogTitle>
+          <DialogTitle>{user ? "Editar Usuário" : "Convidar Novo Usuário"}</DialogTitle>
           <DialogDescription>
-            Preencha os dados do usuário interno.
+            {user 
+              ? "Edite os dados do usuário interno."
+              : "Preencha os dados para enviar um convite de acesso ao novo usuário."
+            }
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">Nome Completo</Label>
               <Input id="name" value={formData.full_name || ""} onChange={e => setFormData({ ...formData, full_name: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+              <Input id="email" type="email" value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} disabled={!!user} />
+              {user && <p className="text-xs text-muted-foreground">O email não pode ser alterado.</p>}
             </div>
           </div>
           <div className="space-y-2">
@@ -295,7 +314,9 @@ function UserFormModal({ user, onClose, onSave, profiles, branches }: { user: In
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave}>Salvar</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Salvando..." : "Salvar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
