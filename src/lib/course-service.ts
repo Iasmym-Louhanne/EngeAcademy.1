@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
 export interface Course {
   id: string;
@@ -41,337 +40,348 @@ export interface Lesson {
 
 // CURSOS
 export async function getAllCourses() {
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching courses:", error);
+    if (error) {
+      console.error("Error fetching courses:", error);
+      throw error;
+    }
+
+    return data as Course[];
+  } catch (error) {
+    console.error("Error in getAllCourses:", error);
     throw error;
   }
-
-  return data as Course[];
 }
 
 export async function getCourseById(id: string) {
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("id", id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  if (error) {
-    console.error(`Error fetching course with id ${id}:`, error);
+    if (error) {
+      console.error(`Error fetching course with id ${id}:`, error);
+      throw error;
+    }
+
+    return data as Course;
+  } catch (error) {
+    console.error("Error in getCourseById:", error);
     throw error;
   }
-
-  return data as Course;
 }
 
 export async function getCourseWithModules(id: string) {
-  const { data: course, error: courseError } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("id", id)
-    .single();
+  try {
+    const { data: course, error: courseError } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  if (courseError) {
-    console.error(`Error fetching course with id ${id}:`, courseError);
-    throw courseError;
+    if (courseError) {
+      console.error(`Error fetching course with id ${id}:`, courseError);
+      throw courseError;
+    }
+
+    const { data: modules, error: modulesError } = await supabase
+      .from("course_modules")
+      .select("*")
+      .eq("course_id", id)
+      .order("order", { ascending: true });
+
+    if (modulesError) {
+      console.error(`Error fetching modules for course ${id}:`, modulesError);
+      throw modulesError;
+    }
+
+    return {
+      ...course,
+      modules: modules || []
+    } as Course & { modules: Module[] };
+  } catch (error) {
+    console.error("Error in getCourseWithModules:", error);
+    throw error;
   }
-
-  const { data: modules, error: modulesError } = await supabase
-    .from("modules")
-    .select("*")
-    .eq("course_id", id)
-    .order("order_index", { ascending: true });
-
-  if (modulesError) {
-    console.error(`Error fetching modules for course ${id}:`, modulesError);
-    throw modulesError;
-  }
-
-  return {
-    ...course,
-    modules: modules
-  } as Course & { modules: Module[] };
 }
 
 export async function getCourseWithModulesAndLessons(id: string) {
-  const courseWithModules = await getCourseWithModules(id);
-  
-  const modulesWithLessons = await Promise.all(
-    courseWithModules.modules.map(async (module) => {
-      const { data: lessons, error } = await supabase
-        .from("lessons")
-        .select("*")
-        .eq("module_id", module.id)
-        .order("order_index", { ascending: true });
+  try {
+    const courseWithModules = await getCourseWithModules(id);
+    
+    const modulesWithLessons = await Promise.all(
+      courseWithModules.modules.map(async (module) => {
+        const { data: lessons, error } = await supabase
+          .from("lessons")
+          .select("*")
+          .eq("module_id", module.id)
+          .order("order", { ascending: true });
 
-      if (error) {
-        console.error(`Error fetching lessons for module ${module.id}:`, error);
-        throw error;
-      }
+        if (error) {
+          console.error(`Error fetching lessons for module ${module.id}:`, error);
+          throw error;
+        }
 
-      return {
-        ...module,
-        lessons: lessons
-      };
-    })
-  );
+        return {
+          ...module,
+          lessons: lessons || []
+        };
+      })
+    );
 
-  return {
-    ...courseWithModules,
-    modules: modulesWithLessons
-  } as Course & { modules: (Module & { lessons: Lesson[] })[] };
+    return {
+      ...courseWithModules,
+      modules: modulesWithLessons
+    } as Course & { modules: (Module & { lessons: Lesson[] })[] };
+  } catch (error) {
+    console.error("Error in getCourseWithModulesAndLessons:", error);
+    throw error;
+  }
 }
 
 export async function createCourse(courseData: Omit<Course, "id" | "created_at" | "updated_at">) {
-  const { data, error } = await supabase
-    .from("courses")
-    .insert(courseData)
-    .select()
-    .single();
+  try {
+    console.log("Creating course with data:", courseData);
+    
+    // Garantir que os campos obrigatórios estão presentes
+    const courseToInsert = {
+      title: courseData.title || '',
+      description: courseData.description || '',
+      thumbnail_url: courseData.thumbnail_url || '',
+      duration: courseData.duration || 0,
+      price: courseData.price || 0,
+      sale_price: courseData.sale_price || null,
+      status: courseData.status || 'draft',
+      category: courseData.category || '',
+      tags: courseData.tags || []
+    };
 
-  if (error) {
-    console.error("Error creating course:", error);
+    const { data, error } = await supabase
+      .from("courses")
+      .insert(courseToInsert)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating course:", error);
+      throw error;
+    }
+
+    console.log("Course created successfully:", data);
+    return data as Course;
+  } catch (error) {
+    console.error("Error in createCourse:", error);
     throw error;
   }
-
-  return data as Course;
 }
 
 export async function updateCourse(id: string, courseData: Partial<Course>) {
-  const { data, error } = await supabase
-    .from("courses")
-    .update(courseData)
-    .eq("id", id)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .update(courseData)
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error(`Error updating course with id ${id}:`, error);
+    if (error) {
+      console.error(`Error updating course with id ${id}:`, error);
+      throw error;
+    }
+
+    return data as Course;
+  } catch (error) {
+    console.error("Error in updateCourse:", error);
     throw error;
   }
-
-  return data as Course;
 }
 
 export async function deleteCourse(id: string) {
-  const { error } = await supabase
-    .from("courses")
-    .delete()
-    .eq("id", id);
+  try {
+    const { error } = await supabase
+      .from("courses")
+      .delete()
+      .eq("id", id);
 
-  if (error) {
-    console.error(`Error deleting course with id ${id}:`, error);
+    if (error) {
+      console.error(`Error deleting course with id ${id}:`, error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in deleteCourse:", error);
     throw error;
   }
-
-  return true;
 }
 
 // MÓDULOS
 export async function getModulesByCourse(courseId: string) {
-  const { data, error } = await supabase
-    .from("modules")
-    .select("*")
-    .eq("course_id", courseId)
-    .order("order_index", { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from("course_modules")
+      .select("*")
+      .eq("course_id", courseId)
+      .order("order", { ascending: true });
 
-  if (error) {
-    console.error(`Error fetching modules for course ${courseId}:`, error);
+    if (error) {
+      console.error(`Error fetching modules for course ${courseId}:`, error);
+      throw error;
+    }
+
+    return data as Module[];
+  } catch (error) {
+    console.error("Error in getModulesByCourse:", error);
     throw error;
   }
-
-  return data as Module[];
-}
-
-export async function getModuleWithLessons(moduleId: string) {
-  const { data: module, error: moduleError } = await supabase
-    .from("modules")
-    .select("*")
-    .eq("id", moduleId)
-    .single();
-
-  if (moduleError) {
-    console.error(`Error fetching module with id ${moduleId}:`, moduleError);
-    throw moduleError;
-  }
-
-  const { data: lessons, error: lessonsError } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("module_id", moduleId)
-    .order("order_index", { ascending: true });
-
-  if (lessonsError) {
-    console.error(`Error fetching lessons for module ${moduleId}:`, lessonsError);
-    throw lessonsError;
-  }
-
-  return {
-    ...module,
-    lessons: lessons
-  } as Module & { lessons: Lesson[] };
 }
 
 export async function createModule(moduleData: Omit<Module, "id" | "created_at" | "updated_at">) {
-  const { data, error } = await supabase
-    .from("modules")
-    .insert(moduleData)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("course_modules")
+      .insert(moduleData)
+      .select()
+      .single();
 
-  if (error) {
-    console.error("Error creating module:", error);
+    if (error) {
+      console.error("Error creating module:", error);
+      throw error;
+    }
+
+    return data as Module;
+  } catch (error) {
+    console.error("Error in createModule:", error);
     throw error;
   }
-
-  return data as Module;
 }
 
 export async function updateModule(id: string, moduleData: Partial<Module>) {
-  const { data, error } = await supabase
-    .from("modules")
-    .update(moduleData)
-    .eq("id", id)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("course_modules")
+      .update(moduleData)
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error(`Error updating module with id ${id}:`, error);
+    if (error) {
+      console.error(`Error updating module with id ${id}:`, error);
+      throw error;
+    }
+
+    return data as Module;
+  } catch (error) {
+    console.error("Error in updateModule:", error);
     throw error;
   }
-
-  return data as Module;
 }
 
 export async function deleteModule(id: string) {
-  const { error } = await supabase
-    .from("modules")
-    .delete()
-    .eq("id", id);
+  try {
+    const { error } = await supabase
+      .from("course_modules")
+      .delete()
+      .eq("id", id);
 
-  if (error) {
-    console.error(`Error deleting module with id ${id}:`, error);
+    if (error) {
+      console.error(`Error deleting module with id ${id}:`, error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in deleteModule:", error);
     throw error;
   }
-
-  return true;
-}
-
-export async function reorderModules(modules: { id: string; order_index: number }[]) {
-  const updates = modules.map(({ id, order_index }) => ({
-    id,
-    order_index
-  }));
-
-  const { data, error } = await supabase
-    .from("modules")
-    .upsert(updates, { onConflict: "id" });
-
-  if (error) {
-    console.error("Error reordering modules:", error);
-    throw error;
-  }
-
-  return true;
 }
 
 // AULAS
 export async function getLessonsByModule(moduleId: string) {
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("module_id", moduleId)
-    .order("order_index", { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("*")
+      .eq("module_id", moduleId)
+      .order("order", { ascending: true });
 
-  if (error) {
-    console.error(`Error fetching lessons for module ${moduleId}:`, error);
+    if (error) {
+      console.error(`Error fetching lessons for module ${moduleId}:`, error);
+      throw error;
+    }
+
+    return data as Lesson[];
+  } catch (error) {
+    console.error("Error in getLessonsByModule:", error);
     throw error;
   }
-
-  return data as Lesson[];
-}
-
-export async function getLessonById(id: string) {
-  const { data, error } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    console.error(`Error fetching lesson with id ${id}:`, error);
-    throw error;
-  }
-
-  return data as Lesson;
 }
 
 export async function createLesson(lessonData: Omit<Lesson, "id" | "created_at" | "updated_at">) {
-  const { data, error } = await supabase
-    .from("lessons")
-    .insert(lessonData)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .insert(lessonData)
+      .select()
+      .single();
 
-  if (error) {
-    console.error("Error creating lesson:", error);
+    if (error) {
+      console.error("Error creating lesson:", error);
+      throw error;
+    }
+
+    return data as Lesson;
+  } catch (error) {
+    console.error("Error in createLesson:", error);
     throw error;
   }
-
-  return data as Lesson;
 }
 
 export async function updateLesson(id: string, lessonData: Partial<Lesson>) {
-  const { data, error } = await supabase
-    .from("lessons")
-    .update(lessonData)
-    .eq("id", id)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .update(lessonData)
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error(`Error updating lesson with id ${id}:`, error);
+    if (error) {
+      console.error(`Error updating lesson with id ${id}:`, error);
+      throw error;
+    }
+
+    return data as Lesson;
+  } catch (error) {
+    console.error("Error in updateLesson:", error);
     throw error;
   }
-
-  return data as Lesson;
 }
 
 export async function deleteLesson(id: string) {
-  const { error } = await supabase
-    .from("lessons")
-    .delete()
-    .eq("id", id);
+  try {
+    const { error } = await supabase
+      .from("lessons")
+      .delete()
+      .eq("id", id);
 
-  if (error) {
-    console.error(`Error deleting lesson with id ${id}:`, error);
+    if (error) {
+      console.error(`Error deleting lesson with id ${id}:`, error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in deleteLesson:", error);
     throw error;
   }
-
-  return true;
-}
-
-export async function reorderLessons(lessons: { id: string; order_index: number }[]) {
-  const updates = lessons.map(({ id, order_index }) => ({
-    id,
-    order_index
-  }));
-
-  const { data, error } = await supabase
-    .from("lessons")
-    .upsert(updates, { onConflict: "id" });
-
-  if (error) {
-    console.error("Error reordering lessons:", error);
-    throw error;
-  }
-
-  return true;
 }
 
 // Extrair ID do vídeo do YouTube da URL

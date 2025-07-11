@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { createCourse } from "@/lib/course-service";
 import { toast } from "sonner";
 import { ChevronLeft, Plus, X } from "lucide-react";
@@ -64,15 +63,44 @@ export default function NewCoursePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica
+    if (!courseData.title.trim()) {
+      toast.error("O título do curso é obrigatório.");
+      return;
+    }
+
+    if (courseData.price < 0) {
+      toast.error("O preço não pode ser negativo.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      console.log("Submitting course data:", courseData);
+      
       const newCourse = await createCourse(courseData);
+      
+      console.log("Course created successfully:", newCourse);
       toast.success("Curso criado com sucesso!");
+      
+      // Redirecionar para a página de edição do curso
       router.push(`/dashboard/admin/cursos/${newCourse.id}/editar`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao criar curso:", error);
-      toast.error("Erro ao criar curso. Verifique os dados e tente novamente.");
+      
+      // Tratamento de erros mais específico
+      if (error.message?.includes("duplicate key")) {
+        toast.error("Já existe um curso com este título.");
+      } else if (error.message?.includes("permission denied")) {
+        toast.error("Você não tem permissão para criar cursos.");
+      } else if (error.message?.includes("network")) {
+        toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
+      } else {
+        toast.error(`Erro ao criar curso: ${error.message || "Erro desconhecido"}`);
+      }
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -109,7 +137,7 @@ export default function NewCoursePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Título do Curso</Label>
+                  <Label htmlFor="title">Título do Curso *</Label>
                   <Input 
                     id="title"
                     name="title"
@@ -228,7 +256,7 @@ export default function NewCoursePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="price">Preço (R$)</Label>
+                    <Label htmlFor="price">Preço (R$) *</Label>
                     <Input 
                       id="price"
                       name="price"
@@ -286,13 +314,15 @@ export default function NewCoursePage() {
 
             <div className="flex justify-end gap-4">
               <Link href="/dashboard/admin/cursos">
-                <Button variant="outline" type="button">Cancelar</Button>
+                <Button variant="outline" type="button" disabled={isSubmitting}>
+                  Cancelar
+                </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
-                    Salvando...
+                    Criando...
                   </>
                 ) : (
                   "Criar Curso"
