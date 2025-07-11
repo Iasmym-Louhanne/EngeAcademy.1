@@ -43,48 +43,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserPermissions = async (userId: string): Promise<ExtendedUser | null> => {
+  const fetchUserAndPermissions = async (authUser: SupabaseUser): Promise<ExtendedUser> => {
+    // 1. Buscar o perfil do usuário na tabela 'profiles'
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', authUser.id)
       .single();
 
     if (profileError || !userProfile) {
-      return null;
+      console.error("Perfil não encontrado para o usuário:", profileError?.message);
+      return { ...authUser, permissions: [] };
     }
 
     setProfile(userProfile);
 
-    // Se for um usuário interno, buscar permissões
+    // 2. Se o perfil não for de aluno, buscar as permissões
     if (userProfile.profile_id && userProfile.profile_id !== 'aluno') {
-      const { data: internalUser, error: internalUserError } = await supabase
-        .from('internal_users')
-        .select('profile_id')
-        .eq('email', userProfile.email) // ou usar ID se for o mesmo
+      const { data: permissionProfile, error: permError } = await supabase
+        .from('permission_profiles')
+        .select('permissions')
+        .eq('id', userProfile.profile_id)
         .single();
-
-      if (internalUser && !internalUserError) {
-        const { data: permissionProfile, error: permError } = await supabase
-          .from('permission_profiles')
-          .select('permissions')
-          .eq('id', internalUser.profile_id)
-          .single();
-        
-        if (permissionProfile && !permError) {
-          return {
-            ...user,
-            profileId: userProfile.profile_id,
-            permissions: permissionProfile.permissions as Permission[],
-          };
-        }
+      
+      if (permissionProfile && !permError) {
+        return {
+          ...authUser,
+          profileId: userProfile.profile_id,
+          permissions: permissionProfile.permissions as Permission[],
+        };
       }
     }
 
-    // Retornar usuário sem permissões especiais (aluno)
+    // 3. Retornar usuário com perfil de aluno (sem permissões especiais)
     return {
-      ...user,
-      profileId: userProfile.profile_id,
+      ...authUser,
+      profileId: userProfile.profile_id || 'aluno',
       permissions: [],
     };
   };
@@ -94,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const fullUser = await fetchUserPermissions(session.user.id);
+        const fullUser = await fetchUserAndPermissions(session.user);
         setUser(fullUser);
       } else {
         setUser(null);
@@ -109,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          const fullUser = await fetchUserPermissions(session.user.id);
+          const fullUser = await fetchUserAndPermissions(session.user);
           setUser(fullUser);
 
           if (event === 'SIGNED_IN' && pathname === '/auth/login') {

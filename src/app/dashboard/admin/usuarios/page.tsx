@@ -62,14 +62,36 @@ export default function InternalUsersPage() {
         await updateInternalUser(editingUser.id, userData);
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        // Lógica de criação via Edge Function
-        const { error } = await supabase.functions.invoke('invite-user', {
-          body: userData,
-        });
+        // Lógica de criação direta
+        const { data, error } = await supabase.auth.admin.inviteUserByEmail(
+          userData.email!,
+          {
+            data: {
+              full_name: userData.full_name,
+              profile_id: userData.profile_id,
+            },
+          }
+        );
 
         if (error) {
-          throw new Error(error.message);
+          if (error.message.includes("User already registered")) {
+            toast.error("Este email já está cadastrado no sistema.");
+          } else {
+            throw error;
+          }
+          return;
         }
+        
+        // Inserir na tabela de usuários internos
+        await supabase.from('internal_users').insert({
+          id: data.user.id,
+          email: userData.email,
+          full_name: userData.full_name,
+          profile_id: userData.profile_id,
+          accessible_branches: userData.accessible_branches || [],
+          has_full_access: userData.has_full_access || false,
+          is_active: true,
+        });
         
         toast.success("Convite enviado com sucesso para o novo usuário!");
       }

@@ -24,11 +24,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: userData, error: userError } = await supabaseAdmin.from('users').select('raw_user_meta_data').eq('id', userId).single();
+    const { data: userData, error: userError } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userId).single();
     if (userError) throw userError;
-    const studentName = userData.raw_user_meta_data?.full_name || 'Aluno Sem Nome';
+    const studentName = userData.full_name || 'Aluno Sem Nome';
 
-    const courseName = "NR 35 - Trabalho em Altura"; // Mock
+    const { data: courseData, error: courseError } = await supabaseAdmin.from('courses').select('title').eq('id', courseId).single();
+    if (courseError) throw courseError;
+    const courseName = courseData.title || "Curso Concluído";
+    
     const completionDate = new Date().toLocaleDateString('pt-BR');
 
     const pdfDoc = await PDFDocument.create();
