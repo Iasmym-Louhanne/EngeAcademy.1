@@ -92,20 +92,71 @@ export default function EditCoursePage() {
   }, [id]);
 
   const handleSaveCourse = async () => {
+    console.log("=== INICIANDO SALVAMENTO DO CURSO ===");
+    
     if (!courseData.id) {
+      console.error("ID do curso não encontrado:", courseData);
       toast.error("ID do curso não encontrado");
       return;
     }
 
+    // Validação básica
+    if (!courseData.title?.trim()) {
+      console.error("Título do curso é obrigatório");
+      toast.error("O título do curso é obrigatório");
+      return;
+    }
+
     setIsSaving(true);
+    
     try {
-      console.log("Salvando curso:", courseData);
-      await updateCourse(courseData.id, courseData);
+      console.log("Dados do curso antes de salvar:", courseData);
+      
+      // Preparar dados para envio
+      const dataToSave = {
+        title: courseData.title,
+        description: courseData.description || "",
+        thumbnail_url: courseData.thumbnail_url || "",
+        duration: Number(courseData.duration) || 0,
+        price: Number(courseData.price) || 0,
+        sale_price: courseData.sale_price ? Number(courseData.sale_price) : null,
+        status: courseData.status || "draft",
+        category: courseData.category || "",
+        tags: Array.isArray(courseData.tags) ? courseData.tags : []
+      };
+      
+      console.log("Dados preparados para envio:", dataToSave);
+      
+      const result = await updateCourse(courseData.id, dataToSave);
+      
+      console.log("Resultado da atualização:", result);
+      
+      // Atualizar o estado local com os dados retornados
+      setCourseData(prev => ({
+        ...prev,
+        ...result
+      }));
+      
       toast.success("Curso atualizado com sucesso!");
+      
     } catch (error: any) {
-      console.error("Erro ao atualizar curso:", error);
-      toast.error(`Erro ao atualizar curso: ${error.message}`);
+      console.error("=== ERRO AO SALVAR CURSO ===");
+      console.error("Erro completo:", error);
+      console.error("Mensagem do erro:", error.message);
+      console.error("Stack trace:", error.stack);
+      
+      let errorMessage = "Erro desconhecido ao salvar o curso";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      toast.error(`Erro ao salvar curso: ${errorMessage}`);
+      
     } finally {
+      console.log("=== FINALIZANDO SALVAMENTO ===");
       setIsSaving(false);
     }
   };
@@ -433,8 +484,8 @@ export default function EditCoursePage() {
               <YouTubePlayer videoId={previewVideo.videoId} />
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </Dialog>
+      </div>
     </DashboardLayout>
   );
 }
