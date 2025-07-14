@@ -24,7 +24,9 @@ export default function EditCoursePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [courseData, setCourseData] = useState<any>({});
+  const [courseData, setCourseData] = useState<any>({
+    tags: [] // Inicializar tags como um array vazio
+  });
   const [modules, setModules] = useState<any[]>([]);
   
   const [dialogState, setDialogState] = useState({
@@ -41,9 +43,10 @@ export default function EditCoursePage() {
       try {
         const data = await getCourseWithModulesAndLessons(id);
         setCourseData(data);
-        setModules(data.modules);
+        setModules(data.modules || []); // Garantir que modules seja um array
       } catch (error) {
         toast.error("Não foi possível carregar os dados do curso.");
+        console.error("Erro ao carregar curso:", error);
       } finally {
         setIsLoading(false);
       }

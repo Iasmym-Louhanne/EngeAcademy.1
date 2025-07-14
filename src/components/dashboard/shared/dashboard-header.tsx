@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, LogOut, ShieldCheck } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
 import { getProfileById } from "@/lib/permission-service";
+import { useEffect, useState } from "react";
 
 interface DashboardHeaderProps {
   title: string;
@@ -15,6 +16,25 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { user, profile, logout } = useAuth();
+  const [profileName, setProfileName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProfileName = async () => {
+      if (user?.profileId && user.profileId !== 'aluno') {
+        try {
+          const permissionProfile = await getProfileById(user.profileId);
+          setProfileName(permissionProfile?.name || user.profileId);
+        } catch (error) {
+          console.error("Erro ao buscar nome do perfil:", error);
+          setProfileName(user.profileId);
+        }
+      } else {
+        setProfileName(user?.profileId || "Aluno");
+      }
+    };
+
+    fetchProfileName();
+  }, [user?.profileId]);
 
   const getInitials = () => {
     if (!profile?.full_name) return "?";
@@ -73,7 +93,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
           
           <div className="hidden md:block">
             <p className="text-sm font-medium">{profile?.full_name}</p>
-            <p className="text-xs text-muted-foreground">{getProfileById(user?.profileId || '')?.name || user?.profileId}</p>
+            <p className="text-xs text-muted-foreground">{profileName}</p>
           </div>
           
           <Button variant="ghost" size="icon" onClick={logout}>
