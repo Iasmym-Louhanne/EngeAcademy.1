@@ -49,6 +49,27 @@ const processCourseTags = (course: any): Course => {
   return course;
 };
 
+// Função auxiliar para tratar erros do Supabase
+const handleSupabaseError = (error: any, operation: string) => {
+  console.error(`Erro em ${operation}:`, {
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    code: error.code
+  });
+  
+  // Criar uma mensagem de erro mais informativa
+  let errorMessage = error.message || "Erro desconhecido";
+  if (error.details) {
+    errorMessage += ` - Detalhes: ${error.details}`;
+  }
+  if (error.hint) {
+    errorMessage += ` - Dica: ${error.hint}`;
+  }
+  
+  throw new Error(errorMessage);
+};
+
 // CURSOS
 export async function getAllCourses() {
   try {
@@ -59,8 +80,7 @@ export async function getAllCourses() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Erro ao buscar cursos:", error);
-      throw error;
+      handleSupabaseError(error, "getAllCourses");
     }
 
     console.log("Cursos encontrados:", data?.length || 0);
@@ -81,8 +101,7 @@ export async function getCourseById(id: string) {
       .single();
 
     if (error) {
-      console.error("Erro ao buscar curso:", error);
-      throw error;
+      handleSupabaseError(error, "getCourseById");
     }
 
     console.log("Curso encontrado:", data?.title);
@@ -98,6 +117,7 @@ export async function getCourseWithModules(id: string) {
     console.log("Buscando curso com módulos:", id);
     const course = await getCourseById(id);
 
+    console.log("Buscando módulos para o curso:", id);
     const { data: modules, error: modulesError } = await supabase
       .from("course_modules")
       .select("*")
@@ -105,8 +125,7 @@ export async function getCourseWithModules(id: string) {
       .order("order_index", { ascending: true });
 
     if (modulesError) {
-      console.error("Erro ao buscar módulos:", modulesError);
-      throw modulesError;
+      handleSupabaseError(modulesError, "getCourseWithModules - buscar módulos");
     }
 
     console.log("Módulos encontrados:", modules?.length || 0);
@@ -127,6 +146,7 @@ export async function getCourseWithModulesAndLessons(id: string) {
     
     const modulesWithLessons = await Promise.all(
       courseWithModules.modules.map(async (module) => {
+        console.log("Buscando aulas para o módulo:", module.id);
         const { data: lessons, error } = await supabase
           .from("lessons")
           .select("*")
@@ -134,8 +154,7 @@ export async function getCourseWithModulesAndLessons(id: string) {
           .order("order_index", { ascending: true });
 
         if (error) {
-          console.error(`Erro ao buscar aulas do módulo ${module.id}:`, error);
-          throw error;
+          handleSupabaseError(error, `getCourseWithModulesAndLessons - buscar aulas do módulo ${module.id}`);
         }
 
         console.log(`Aulas encontradas no módulo ${module.title}:`, lessons?.length || 0);
@@ -172,8 +191,7 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Erro ao criar curso:", error);
-      throw error;
+      handleSupabaseError(error, "createCourse");
     }
 
     console.log("Curso criado com sucesso:", data.id);
@@ -202,8 +220,7 @@ export async function updateCourse(id: string, courseData: Partial<Course>) {
       .single();
 
     if (error) {
-      console.error("Erro ao atualizar curso:", error);
-      throw error;
+      handleSupabaseError(error, "updateCourse");
     }
 
     console.log("Curso atualizado com sucesso");
@@ -224,8 +241,7 @@ export async function deleteCourse(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error("Erro ao deletar curso:", error);
-      throw error;
+      handleSupabaseError(error, "deleteCourse");
     }
 
     console.log("Curso deletado com sucesso");
@@ -248,8 +264,7 @@ export async function getModulesByCourse(courseId: string) {
       .order("order_index", { ascending: true });
 
     if (error) {
-      console.error("Erro ao buscar módulos:", error);
-      throw error;
+      handleSupabaseError(error, "getModulesByCourse");
     }
 
     console.log("Módulos encontrados:", data?.length || 0);
@@ -271,8 +286,7 @@ export async function createModule(moduleData: Omit<Module, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Erro ao criar módulo:", error);
-      throw error;
+      handleSupabaseError(error, "createModule");
     }
 
     console.log("Módulo criado com sucesso:", data.id);
@@ -298,8 +312,7 @@ export async function updateModule(id: string, moduleData: Partial<Module>) {
       .single();
 
     if (error) {
-      console.error("Erro ao atualizar módulo:", error);
-      throw error;
+      handleSupabaseError(error, "updateModule");
     }
 
     console.log("Módulo atualizado com sucesso");
@@ -320,8 +333,7 @@ export async function deleteModule(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error("Erro ao deletar módulo:", error);
-      throw error;
+      handleSupabaseError(error, "deleteModule");
     }
 
     console.log("Módulo deletado com sucesso");
@@ -344,8 +356,7 @@ export async function getLessonsByModule(moduleId: string) {
       .order("order_index", { ascending: true });
 
     if (error) {
-      console.error("Erro ao buscar aulas:", error);
-      throw error;
+      handleSupabaseError(error, "getLessonsByModule");
     }
 
     console.log("Aulas encontradas:", data?.length || 0);
@@ -367,8 +378,7 @@ export async function createLesson(lessonData: Omit<Lesson, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Erro ao criar aula:", error);
-      throw error;
+      handleSupabaseError(error, "createLesson");
     }
 
     console.log("Aula criada com sucesso:", data.id);
@@ -394,8 +404,7 @@ export async function updateLesson(id: string, lessonData: Partial<Lesson>) {
       .single();
 
     if (error) {
-      console.error("Erro ao atualizar aula:", error);
-      throw error;
+      handleSupabaseError(error, "updateLesson");
     }
 
     console.log("Aula atualizada com sucesso");
@@ -416,8 +425,7 @@ export async function deleteLesson(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error("Erro ao deletar aula:", error);
-      throw error;
+      handleSupabaseError(error, "deleteLesson");
     }
 
     console.log("Aula deletada com sucesso");
