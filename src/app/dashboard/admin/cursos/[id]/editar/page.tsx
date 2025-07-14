@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { getCourseWithModulesAndLessons, updateCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson, reorderModules, reorderLessons, extractYouTubeId } from "@/lib/course-service";
 import { createExam, deleteExam, updateExam } from "@/lib/exam-service";
 import { toast } from "sonner";
-import { ChevronLeft, Pencil, Plus, Save, Trash2, FilePlus, FileVideo, GripVertical, X, YouTube, FileText, SquareCheckbox } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Save, Trash2, FilePlus, FileVideo, GripVertical, X, Youtube, FileText, SquareCheck } from "lucide-react";
 import Image from "next/image";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { YouTubePlayer } from "@/components/player/youtube-player";
@@ -851,7 +851,7 @@ export default function EditCoursePage() {
                                                             size="sm"
                                                             onClick={() => handlePreviewVideo(lesson.video_url)}
                                                           >
-                                                            <YouTube className="h-4 w-4" />
+                                                            <Youtube className="h-4 w-4" />
                                                           </Button>
                                                         )}
                                                         <Button
@@ -900,7 +900,7 @@ export default function EditCoursePage() {
                                       size="sm"
                                       onClick={() => openNewExamDialog(module.id)}
                                     >
-                                      <SquareCheckbox className="h-4 w-4 mr-1" />
+                                      <SquareCheck className="h-4 w-4 mr-1" />
                                       Adicionar Prova
                                     </Button>
                                   </div>
@@ -1047,7 +1047,7 @@ export default function EditCoursePage() {
                   onClick={() => handlePreviewVideo(lessonFormData.video_url)}
                   disabled={!lessonFormData.video_url}
                 >
-                  <YouTube className="h-4 w-4" />
+                  <Youtube className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -1149,7 +1149,7 @@ export default function EditCoursePage() {
                   onClick={() => handlePreviewVideo(lessonFormData.video_url)}
                   disabled={!lessonFormData.video_url}
                 >
-                  <YouTube className="h-4 w-4" />
+                  <Youtube className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
