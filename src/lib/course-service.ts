@@ -10,7 +10,7 @@ export interface Course {
   sale_price: number | null;
   status: "draft" | "published" | "archived";
   category: string;
-  tags: string[];
+  tags: string[] | string; // Pode ser string do DB ou array na UI
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +38,17 @@ export interface Lesson {
   updated_at: string;
 }
 
+// Função auxiliar para converter tags
+const processCourseTags = (course: any): Course => {
+  if (course && typeof course.tags === 'string') {
+    return { ...course, tags: course.tags.split(',').filter(tag => tag.trim() !== '') };
+  }
+  if (course && !course.tags) {
+    return { ...course, tags: [] };
+  }
+  return course;
+};
+
 // CURSOS
 export async function getAllCourses() {
   try {
@@ -47,13 +58,13 @@ export async function getAllCourses() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching courses:", error);
+      console.error("Error fetching courses:", error.message);
       throw error;
     }
 
-    return data as Course[];
-  } catch (error) {
-    console.error("Error in getAllCourses:", error);
+    return data.map(processCourseTags) as Course[];
+  } catch (error: any) {
+    console.error("Error in getAllCourses:", error.message);
     throw error;
   }
 }
@@ -67,29 +78,20 @@ export async function getCourseById(id: string) {
       .single();
 
     if (error) {
-      console.error(`Error fetching course with id ${id}:`, error);
+      console.error(`Error fetching course with id ${id}:`, error.message);
       throw error;
     }
 
-    return data as Course;
-  } catch (error) {
-    console.error("Error in getCourseById:", error);
+    return processCourseTags(data) as Course;
+  } catch (error: any) {
+    console.error("Error in getCourseById:", error.message);
     throw error;
   }
 }
 
 export async function getCourseWithModules(id: string) {
   try {
-    const { data: course, error: courseError } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (courseError) {
-      console.error(`Error fetching course with id ${id}:`, courseError);
-      throw courseError;
-    }
+    const course = await getCourseById(id);
 
     const { data: modules, error: modulesError } = await supabase
       .from("course_modules")
@@ -98,7 +100,7 @@ export async function getCourseWithModules(id: string) {
       .order("order_index", { ascending: true });
 
     if (modulesError) {
-      console.error(`Error fetching modules for course ${id}:`, modulesError);
+      console.error(`Error fetching modules for course ${id}:`, modulesError.message);
       throw modulesError;
     }
 
@@ -106,8 +108,8 @@ export async function getCourseWithModules(id: string) {
       ...course,
       modules: modules || []
     } as Course & { modules: Module[] };
-  } catch (error) {
-    console.error("Error in getCourseWithModules:", error);
+  } catch (error: any) {
+    console.error("Error in getCourseWithModules:", error.message);
     throw error;
   }
 }
@@ -125,7 +127,7 @@ export async function getCourseWithModulesAndLessons(id: string) {
           .order("order_index", { ascending: true });
 
         if (error) {
-          console.error(`Error fetching lessons for module ${module.id}:`, error);
+          console.error(`Error fetching lessons for module ${module.id}:`, error.message);
           throw error;
         }
 
@@ -140,8 +142,8 @@ export async function getCourseWithModulesAndLessons(id: string) {
       ...courseWithModules,
       modules: modulesWithLessons
     } as Course & { modules: (Module & { lessons: Lesson[] })[] };
-  } catch (error) {
-    console.error("Error in getCourseWithModulesAndLessons:", error);
+  } catch (error: any) {
+    console.error("Error in getCourseWithModulesAndLessons:", error.message);
     throw error;
   }
 }
@@ -155,15 +157,8 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
     }
     
     const courseToInsert = {
-      title: courseData.title || '',
-      description: courseData.description || '',
-      thumbnail_url: courseData.thumbnail_url || '',
-      duration: courseData.duration || 0,
-      price: courseData.price || 0,
-      sale_price: courseData.sale_price || null,
-      status: courseData.status || 'draft',
-      category: courseData.category || '',
-      tags: courseData.tags || []
+      ...courseData,
+      tags: Array.isArray(courseData.tags) ? courseData.tags.join(',') : courseData.tags,
     };
 
     const { data, error } = await supabase
@@ -173,34 +168,39 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Error creating course:", error);
+      console.error("Error creating course:", error.message);
       throw error;
     }
 
-    return data as Course;
-  } catch (error) {
-    console.error("Error in createCourse:", error);
+    return processCourseTags(data) as Course;
+  } catch (error: any) {
+    console.error("Error in createCourse:", error.message);
     throw error;
   }
 }
 
 export async function updateCourse(id: string, courseData: Partial<Course>) {
   try {
+    const courseToUpdate = {
+      ...courseData,
+      tags: Array.isArray(courseData.tags) ? courseData.tags.join(',') : courseData.tags,
+    };
+
     const { data, error } = await supabase
       .from("courses")
-      .update(courseData)
+      .update(courseToUpdate)
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
-      console.error(`Error updating course with id ${id}:`, error);
+      console.error(`Error updating course with id ${id}:`, error.message);
       throw error;
     }
 
-    return data as Course;
-  } catch (error) {
-    console.error("Error in updateCourse:", error);
+    return processCourseTags(data) as Course;
+  } catch (error: any) {
+    console.error("Error in updateCourse:", error.message);
     throw error;
   }
 }
@@ -213,13 +213,13 @@ export async function deleteCourse(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error(`Error deleting course with id ${id}:`, error);
+      console.error(`Error deleting course with id ${id}:`, error.message);
       throw error;
     }
 
     return true;
-  } catch (error) {
-    console.error("Error in deleteCourse:", error);
+  } catch (error: any) {
+    console.error("Error in deleteCourse:", error.message);
     throw error;
   }
 }
@@ -234,13 +234,13 @@ export async function getModulesByCourse(courseId: string) {
       .order("order_index", { ascending: true });
 
     if (error) {
-      console.error(`Error fetching modules for course ${courseId}:`, error);
+      console.error(`Error fetching modules for course ${courseId}:`, error.message);
       throw error;
     }
 
     return data as Module[];
-  } catch (error) {
-    console.error("Error in getModulesByCourse:", error);
+  } catch (error: any) {
+    console.error("Error in getModulesByCourse:", error.message);
     throw error;
   }
 }
@@ -254,13 +254,13 @@ export async function createModule(moduleData: Omit<Module, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Error creating module:", error);
+      console.error("Error creating module:", error.message);
       throw error;
     }
 
     return data as Module;
-  } catch (error) {
-    console.error("Error in createModule:", error);
+  } catch (error: any) {
+    console.error("Error in createModule:", error.message);
     throw error;
   }
 }
@@ -275,13 +275,13 @@ export async function updateModule(id: string, moduleData: Partial<Module>) {
       .single();
 
     if (error) {
-      console.error(`Error updating module with id ${id}:`, error);
+      console.error(`Error updating module with id ${id}:`, error.message);
       throw error;
     }
 
     return data as Module;
-  } catch (error) {
-    console.error("Error in updateModule:", error);
+  } catch (error: any) {
+    console.error("Error in updateModule:", error.message);
     throw error;
   }
 }
@@ -294,13 +294,13 @@ export async function deleteModule(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error(`Error deleting module with id ${id}:`, error);
+      console.error(`Error deleting module with id ${id}:`, error.message);
       throw error;
     }
 
     return true;
-  } catch (error) {
-    console.error("Error in deleteModule:", error);
+  } catch (error: any) {
+    console.error("Error in deleteModule:", error.message);
     throw error;
   }
 }
@@ -315,13 +315,13 @@ export async function getLessonsByModule(moduleId: string) {
       .order("order_index", { ascending: true });
 
     if (error) {
-      console.error(`Error fetching lessons for module ${moduleId}:`, error);
+      console.error(`Error fetching lessons for module ${moduleId}:`, error.message);
       throw error;
     }
 
     return data as Lesson[];
-  } catch (error) {
-    console.error("Error in getLessonsByModule:", error);
+  } catch (error: any) {
+    console.error("Error in getLessonsByModule:", error.message);
     throw error;
   }
 }
@@ -335,13 +335,13 @@ export async function createLesson(lessonData: Omit<Lesson, "id" | "created_at" 
       .single();
 
     if (error) {
-      console.error("Error creating lesson:", error);
+      console.error("Error creating lesson:", error.message);
       throw error;
     }
 
     return data as Lesson;
-  } catch (error) {
-    console.error("Error in createLesson:", error);
+  } catch (error: any) {
+    console.error("Error in createLesson:", error.message);
     throw error;
   }
 }
@@ -356,13 +356,13 @@ export async function updateLesson(id: string, lessonData: Partial<Lesson>) {
       .single();
 
     if (error) {
-      console.error(`Error updating lesson with id ${id}:`, error);
+      console.error(`Error updating lesson with id ${id}:`, error.message);
       throw error;
     }
 
     return data as Lesson;
-  } catch (error) {
-    console.error("Error in updateLesson:", error);
+  } catch (error: any) {
+    console.error("Error in updateLesson:", error.message);
     throw error;
   }
 }
@@ -375,13 +375,13 @@ export async function deleteLesson(id: string) {
       .eq("id", id);
 
     if (error) {
-      console.error(`Error deleting lesson with id ${id}:`, error);
+      console.error(`Error deleting lesson with id ${id}:`, error.message);
       throw error;
     }
 
     return true;
-  } catch (error) {
-    console.error("Error in deleteLesson:", error);
+  } catch (error: any) {
+    console.error("Error in deleteLesson:", error.message);
     throw error;
   }
 }
@@ -398,8 +398,8 @@ export async function reorderModules(modules: { id: string; order_index: number 
 
     await Promise.all(updates);
     return true;
-  } catch (error) {
-    console.error("Error reordering modules:", error);
+  } catch (error: any) {
+    console.error("Error reordering modules:", error.message);
     throw error;
   }
 }
@@ -415,14 +415,15 @@ export async function reorderLessons(lessons: { id: string; order_index: number 
 
     await Promise.all(updates);
     return true;
-  } catch (error) {
-    console.error("Error reordering lessons:", error);
+  } catch (error: any) {
+    console.error("Error reordering lessons:", error.message);
     throw error;
   }
 }
 
 // Extrair ID do vídeo do YouTube da URL
 export function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
