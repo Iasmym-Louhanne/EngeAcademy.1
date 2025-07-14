@@ -277,7 +277,7 @@ export async function getModulesByCourse(courseId: string) {
 
 export async function createModule(moduleData: Omit<Module, "id" | "created_at" | "updated_at">) {
   try {
-    console.log("Criando novo módulo:", moduleData.title);
+    console.log("Criando novo módulo:", moduleData);
     
     const { data, error } = await supabase
       .from("course_modules")
