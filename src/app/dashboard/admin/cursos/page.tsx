@@ -61,7 +61,7 @@ export default function CoursesPage() {
 
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (course.category && course.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatusBadge = (status: string) => {
@@ -164,11 +164,6 @@ export default function CoursesPage() {
                     <TableCell>{getStatusBadge(course.status)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/dashboard/admin/cursos/${course.id}`}>
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
                         <Link href={`/dashboard/admin/cursos/${course.id}/editar`}>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
@@ -192,7 +187,6 @@ export default function CoursesPage() {
         </CardContent>
       </Card>
 
-      {/* Modal de confirmação de exclusão */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

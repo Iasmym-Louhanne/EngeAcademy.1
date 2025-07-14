@@ -148,17 +148,12 @@ export async function getCourseWithModulesAndLessons(id: string) {
 
 export async function createCourse(courseData: Omit<Course, "id" | "created_at" | "updated_at">) {
   try {
-    // Verificar se o usuário está autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
       throw new Error("Usuário não autenticado. Faça login novamente.");
     }
-
-    console.log("Creating course with data:", courseData);
-    console.log("Authenticated user:", user.id);
     
-    // Garantir que os campos obrigatórios estão presentes
     const courseToInsert = {
       title: courseData.title || '',
       description: courseData.description || '',
@@ -171,8 +166,6 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
       tags: courseData.tags || []
     };
 
-    console.log("Data to insert:", courseToInsert);
-
     const { data, error } = await supabase
       .from("courses")
       .insert(courseToInsert)
@@ -184,7 +177,6 @@ export async function createCourse(courseData: Omit<Course, "id" | "created_at" 
       throw error;
     }
 
-    console.log("Course created successfully:", data);
     return data as Course;
   } catch (error) {
     console.error("Error in createCourse:", error);

@@ -1,21 +1,38 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { HeroSection } from "@/components/site/hero-section";
 import { CourseCard } from "@/components/site/course-card";
-import { courses } from "@/lib/mock-data";
 import { MadeWithLasy } from "@/components/made-with-lasy";
 import { BookOpen, Building2, CheckCircle, Shield } from "lucide-react";
+import { Course, getAllCourses } from "@/lib/course-service";
+import { toast } from "sonner";
 
 export default function Home() {
-  // Filtrar cursos em destaque
-  const featuredCourses = courses.filter(course => course.featured);
+  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const allCourses = await getAllCourses();
+        // Filtrar cursos publicados e marcados como destaque (exemplo)
+        setFeaturedCourses(allCourses.filter(c => c.status === 'published').slice(0, 3));
+      } catch (error) {
+        toast.error("Não foi possível carregar os cursos em destaque.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadCourses();
+  }, []);
 
   return (
     <main>
-      {/* Hero Section */}
       <HeroSection />
 
-      {/* Featured Courses */}
       <section className="py-16 bg-background">
         <div className="container px-4 md:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
@@ -30,25 +47,28 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                id={course.id}
-                title={course.title}
-                slug={course.slug}
-                description={course.description || ""}
-                price={course.price || 0}
-                duration={course.duration || ""}
-                tags={course.tags}
-                featured={course.featured}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="text-center">Carregando...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  slug={course.id} // Usando ID como slug
+                  description={course.description || ""}
+                  price={course.price || 0}
+                  duration={`${course.duration || 0} min`}
+                  tags={course.tags}
+                  featured={true}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-16 bg-muted/30">
         <div className="container px-4 md:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Por que escolher a EngeAcademy?</h2>
@@ -97,7 +117,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container px-4 md:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">Pronto para começar?</h2>

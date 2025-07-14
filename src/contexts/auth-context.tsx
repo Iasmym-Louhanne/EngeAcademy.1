@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -16,6 +22,7 @@ export interface UserProfile {
   full_name: string;
   avatar_url: string;
   profile_id?: string;
+  currentBranch?: string;
 }
 
 interface AuthContextType {
@@ -43,42 +50,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserAndPermissions = async (authUser: SupabaseUser): Promise<ExtendedUser> => {
-    // 1. Buscar o perfil do usuário na tabela 'profiles'
-    const { data: userProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
+  const fetchUserAndPermissions = async (
+    authUser: SupabaseUser
+  ): Promise<ExtendedUser> => {
+    const { data: userProfile, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authUser.id)
       .single();
 
-    if (profileError || !userProfile) {
-      console.error("Perfil não encontrado para o usuário:", profileError?.message);
+    if (error || !userProfile) {
+      console.error("Erro ao buscar perfil:", error?.message);
       return { ...authUser, permissions: [] };
     }
 
     setProfile(userProfile);
 
-    // 2. Se o perfil não for de aluno, buscar as permissões
-    if (userProfile.profile_id && userProfile.profile_id !== 'aluno') {
-      const { data: permissionProfile, error: permError } = await supabase
-        .from('permission_profiles')
-        .select('permissions')
-        .eq('id', userProfile.profile_id)
+    if (
+      userProfile.profile_id &&
+      userProfile.profile_id !== "aluno"
+    ) {
+      const { data: permissionProfile } = await supabase
+        .from("permission_profiles")
+        .select("permissions")
+        .eq("id", userProfile.profile_id)
         .single();
-      
-      if (permissionProfile && !permError) {
-        return {
-          ...authUser,
-          profileId: userProfile.profile_id,
-          permissions: permissionProfile.permissions as Permission[],
-        };
-      }
+
+      return {
+        ...authUser,
+        profileId: userProfile.profile_id,
+        permissions: permissionProfile?.permissions || [],
+      };
     }
 
-    // 3. Retornar usuário com perfil de aluno (sem permissões especiais)
     return {
       ...authUser,
-      profileId: userProfile.profile_id || 'aluno',
+      profileId: userProfile.profile_id || "aluno",
       permissions: [],
     };
   };
@@ -105,17 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           const fullUser = await fetchUserAndPermissions(session.user);
           setUser(fullUser);
-
-          if (event === 'SIGNED_IN' && pathname === '/auth/login') {
-            const pathByRole: Record<string, string> = {
-              admin: '/dashboard/admin',
-              supervisor: '/dashboard/empresa',
-              commercial: '/dashboard/empresa',
-              support: '/dashboard/admin',
-            };
-            const redirectPath = pathByRole[fullUser?.profileId || ''] ?? '/dashboard/aluno';
-            router.push(redirectPath);
-          }
         } else {
           setUser(null);
           setProfile(null);
@@ -130,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    router.push('/auth/login');
+    router.push("/auth/login");
   };
 
   const value = {
@@ -140,5 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
