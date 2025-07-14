@@ -25,7 +25,15 @@ export default function EditCoursePage() {
   const [isSaving, setIsSaving] = useState(false);
   
   const [courseData, setCourseData] = useState<any>({
-    tags: [] // Inicializar tags como um array vazio
+    title: "",
+    description: "",
+    thumbnail_url: "",
+    duration: 0,
+    price: 0,
+    sale_price: null,
+    status: "draft",
+    category: "",
+    tags: []
   });
   const [modules, setModules] = useState<any[]>([]);
   
@@ -40,10 +48,11 @@ export default function EditCoursePage() {
 
   useEffect(() => {
     const loadCourse = async () => {
+      setIsLoading(true);
       try {
         const data = await getCourseWithModulesAndLessons(id);
         setCourseData(data);
-        setModules(data.modules || []); // Garantir que modules seja um array
+        setModules(data.modules || []);
       } catch (error) {
         toast.error("Não foi possível carregar os dados do curso.");
         console.error("Erro ao carregar curso:", error);
