@@ -484,8 +484,8 @@ export default function EditCoursePage() {
               <YouTubePlayer videoId={previewVideo.videoId} />
             )}
           </div>
-        </Dialog>
-      </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
