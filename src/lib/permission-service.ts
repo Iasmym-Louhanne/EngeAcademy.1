@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 import { Permission, PermissionProfile } from './permissions';
 
 // Função para obter todos os perfis de permissão internos do banco de dados
