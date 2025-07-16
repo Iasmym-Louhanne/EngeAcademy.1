@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GenerateCertificateParams {
   studentName: string;
