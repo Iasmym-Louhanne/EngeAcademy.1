@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CouponInput } from "@/components/checkout/coupon-input";
 import { toast } from "sonner";
-import { courses } from "@/lib/mock-data";
+import { getCourseById, type Course } from "@/lib/course-service";
 import { useAuth } from "@/contexts/auth-context";
 import { checkCompanyCoupon } from "@/lib/coupon-service";
 import { ChevronLeft, CreditCard, ShoppingCart } from "lucide-react";
@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get("course");
   
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<"credit-card" | "pix" | "boleto">("credit-card");
   const [subtotal, setSubtotal] = useState(0);
@@ -32,62 +32,73 @@ export default function CheckoutPage() {
   
   // Carregar curso selecionado
   useEffect(() => {
-    if (courseId) {
-      const course = courses.find(c => c.id === courseId);
-      if (course) {
-        setSelectedCourse(course);
-        const initialSubtotal = (course.price || 0) * quantity;
-        setSubtotal(initialSubtotal);
-        setTotal(initialSubtotal);
+    const fetchCourse = async () => {
+      if (!courseId) return;
+      try {
+        const course = await getCourseById(courseId);
+        if (course) {
+          setSelectedCourse(course);
+          const initialSubtotal = (course.price || 0) * quantity;
+          setSubtotal(initialSubtotal);
+          setTotal(initialSubtotal);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar curso:', err);
       }
-    }
-    
-    // Verificar se o usuário tem um cupom de empresa
-    if (user?.organizationType === 'empresa' && user.organizationId) {
+    };
+
+    fetchCourse();
+  }, [courseId]);
+
+  // Aplicar cupom da empresa automaticamente quando disponível
+  useEffect(() => {
+    if (
+      selectedCourse &&
+      user?.organizationType === 'empresa' &&
+      user.organizationId
+    ) {
       const coupon = checkCompanyCoupon(user.organizationId);
       if (coupon) {
         setCompanyCoupon(coupon);
-        
-        // Calcular desconto para cupom de empresa
-        const initialSubtotal = selectedCourse ? (selectedCourse.price || 0) * quantity : 0;
+        const currentSubtotal = (selectedCourse.price || 0) * quantity;
         let companyDiscount = 0;
-        
+
         if (coupon.discountType === 'percentage') {
-          companyDiscount = (initialSubtotal * coupon.discountValue) / 100;
+          companyDiscount = (currentSubtotal * coupon.discountValue) / 100;
         } else {
-          companyDiscount = Math.min(initialSubtotal, coupon.discountValue);
+          companyDiscount = Math.min(currentSubtotal, coupon.discountValue);
         }
-        
+
         setDiscount(companyDiscount);
-        setTotal(Math.max(0, initialSubtotal - companyDiscount));
+        setTotal(Math.max(0, currentSubtotal - companyDiscount));
         setAppliedCouponCode(coupon.code);
       }
     }
-  }, [courseId, user]);
+  }, [selectedCourse, user, quantity]);
   
   // Atualizar subtotal quando a quantidade mudar
   useEffect(() => {
     if (selectedCourse) {
       const newSubtotal = (selectedCourse.price || 0) * quantity;
       setSubtotal(newSubtotal);
-      
+
       // Recalcular o desconto se houver cupom aplicado
       if (companyCoupon) {
         let newDiscount = 0;
-        
+
         if (companyCoupon.discountType === 'percentage') {
           newDiscount = (newSubtotal * companyCoupon.discountValue) / 100;
         } else {
           newDiscount = Math.min(newSubtotal, companyCoupon.discountValue);
         }
-        
+
         setDiscount(newDiscount);
         setTotal(Math.max(0, newSubtotal - newDiscount));
       } else {
         setTotal(newSubtotal - discount);
       }
     }
-  }, [quantity, selectedCourse]);
+  }, [quantity, selectedCourse, companyCoupon]);
   
   // Lidar com a aplicação de cupom
   const handleCouponApplied = (discountAmount: number, newTotal: number, couponCode: string) => {
@@ -122,10 +133,33 @@ export default function CheckoutPage() {
     }
   };
   
-  // Finalizar a compra
-  const handleCheckout = () => {
-    toast.success("Compra finalizada com sucesso! Redirecionando para o painel...");
-    // Em uma aplicação real, aqui enviaríamos os dados para o backend
+  // Finalizar a compra com Stripe
+  const handleCheckout = async () => {
+    if (!selectedCourse) return;
+
+    try {
+      const res = await fetch("/api/stripe/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: selectedCourse.id,
+          quantity,
+          successUrl: `${window.location.origin}/dashboard`,
+          cancelUrl: `${window.location.origin}/checkout?course=${selectedCourse.id}`
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url as string;
+      } else {
+        toast.error("Não foi possível iniciar o pagamento.");
+      }
+    } catch (err) {
+      console.error("Stripe checkout error", err);
+      toast.error("Erro ao iniciar pagamento.");
+    }
   };
   
   if (!selectedCourse) {
