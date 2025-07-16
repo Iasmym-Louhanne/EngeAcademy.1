@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/integrations/stripe/client';
+import { getStripe } from '@/integrations/stripe/client';
 import { getCourseById } from '@/lib/course-service';
 
 export async function POST(req: NextRequest) {
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
