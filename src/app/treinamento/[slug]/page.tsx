@@ -30,6 +30,7 @@ const courseStructure: Record<string, Array<{
   id: string;
   title: string;
   isQuiz?: boolean;
+  examId?: string;
   lessons?: Array<{
     id: string;
     title: string;
@@ -45,7 +46,7 @@ const courseStructure: Record<string, Array<{
       { id: 'les3', title: 'Equipamentos de Proteção Individual (EPI)', videoId: '3tmd-ClpJxA' },
       { id: 'les4', title: 'Sistemas de Ancoragem', videoId: 'hT_nvWreIhg' },
     ]},
-    { id: 'quiz1', title: 'Prova Final', isQuiz: true }
+    { id: 'quiz1', title: 'Prova Final', isQuiz: true, examId: 'exam-1' }
   ]
 };
 
@@ -153,7 +154,7 @@ export default function TrainingPage({ params }: { params: { slug: string } }) {
                       </button>
                     </li>
                   ))}
-                  {module.isQuiz && (
+                  {(module.isQuiz || module.examId) && (
                      <li>
                         <button
                             onClick={handleQuizClick}

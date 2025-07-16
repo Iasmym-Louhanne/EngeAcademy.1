@@ -18,6 +18,7 @@ interface CourseContentManagerProps {
   onEditLesson: (moduleId: string, lessonId: string) => void;
   onDeleteLesson: (moduleId: string, lessonId: string) => void;
   onNewExam: (moduleId: string) => void;
+  onEditExam: (examId: string) => void;
   onPreviewVideo: (videoUrl: string) => void;
 }
 
@@ -32,6 +33,7 @@ export function CourseContentManager({
   onEditLesson,
   onDeleteLesson,
   onNewExam,
+  onEditExam,
   onPreviewVideo
 }: CourseContentManagerProps) {
   return (
@@ -110,8 +112,30 @@ export function CourseContentManager({
                               )}
                             </div>
                             <div className="flex gap-2 pt-2">
-                              <Button variant="outline" size="sm" onClick={() => onNewLesson(module.id)}><FileVideo className="h-4 w-4 mr-1" />Adicionar Aula</Button>
-                              <Button variant="outline" size="sm" onClick={() => onNewExam(module.id)}><SquareCheck className="h-4 w-4 mr-1" />Adicionar Prova</Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onNewLesson(module.id)}
+                              >
+                                <FileVideo className="h-4 w-4 mr-1" />Adicionar Aula
+                              </Button>
+                              {module.examId ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onEditExam(module.examId)}
+                                >
+                                  <SquareCheck className="h-4 w-4 mr-1" />Editar Prova
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onNewExam(module.id)}
+                                >
+                                  <SquareCheck className="h-4 w-4 mr-1" />Adicionar Prova
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>
