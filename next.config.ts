@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   // Otimizações para Vercel
@@ -28,6 +29,7 @@ const nextConfig: NextConfig = {
 
   // Configurações de webpack para resolver problemas comuns
   webpack: (config, { isServer }) => {
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src');
     // Resolver problemas com módulos Node.js
     if (!isServer) {
       config.resolve.fallback = {

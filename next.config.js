@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Configuração para funcionar no ambiente Lasy
-  assetPrefix: "",
-  basePath: "",
-  // Desabilitar strict mode para compatibilidade
-  reactStrictMode: false,
+const path = require('path');
 
-  // Configurações para melhor compatibilidade de deploy
+const nextConfig = {
+  assetPrefix: '',
+  basePath: '',
+  reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -15,6 +13,10 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src');
+    return config;
   },
 };
 

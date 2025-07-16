@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { checkCompanyCoupon } from "@/lib/coupon-service";
 import { ChevronLeft, CreditCard, ShoppingCart } from "lucide-react";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("course");
@@ -365,5 +365,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
