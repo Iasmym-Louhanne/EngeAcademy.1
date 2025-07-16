@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { getCourseWithModulesAndLessons, updateCourse, createModule, updateModule, deleteModule, createLesson, updateLesson, deleteLesson, reorderModules, reorderLessons, extractYouTubeId } from "@/lib/course-service";
-import { createExam } from "@/lib/exam-service";
+import { createExam, getExamsByModule } from "@/lib/exam-service";
 import { toast } from "sonner";
 import { ChevronLeft, Save, AlertCircle } from "lucide-react";
 import { YouTubePlayer } from "@/components/player/youtube-player";
@@ -76,7 +76,17 @@ export default function EditCoursePage() {
           category: data.category || "",
           tags: data.tags || []
         });
-        setModules(data.modules || []);
+        const modulesWithExams = await Promise.all(
+          (data.modules || []).map(async (mod: any) => {
+            try {
+              const exams = await getExamsByModule(mod.id);
+              return { ...mod, examId: exams[0]?.id || null };
+            } catch {
+              return { ...mod, examId: null };
+            }
+          })
+        );
+        setModules(modulesWithExams);
         
         toast.success("Dados do curso carregados com sucesso!");
       } catch (error: any) {
@@ -178,7 +188,9 @@ export default function EditCoursePage() {
       if (currentModule) {
         console.log("Atualizando módulo:", currentModule.id, data);
         const updated = await updateModule(currentModule.id, data);
-        setModules(modules.map(m => m.id === updated.id ? { ...m, ...updated } : m));
+        setModules(modules.map(m =>
+          m.id === updated.id ? { ...m, ...updated, examId: m.examId } : m
+        ));
         toast.success("Módulo atualizado!");
       } else {
         console.log("Criando novo módulo:", data);
@@ -187,7 +199,7 @@ export default function EditCoursePage() {
           course_id: id, 
           order_index: modules.length 
         });
-        setModules([...modules, { ...newModule, lessons: [] }]);
+        setModules([...modules, { ...newModule, lessons: [], examId: null }]);
         toast.success("Módulo criado!");
       }
       setDialogState({ ...dialogState, module: false });
@@ -282,10 +294,17 @@ export default function EditCoursePage() {
     setDialogState({ ...dialogState, exam: true });
   };
 
+  const handleEditExam = (examId: string) => {
+    router.push(`/dashboard/admin/cursos/${id}/provas/${examId}/editar`);
+  };
+
   const handleSaveExam = async (data: any) => {
     try {
       console.log("Criando nova prova:", data);
       const newExam = await createExam({ ...data, module_id: currentModule.id });
+      setModules(modules.map(m =>
+        m.id === currentModule.id ? { ...m, examId: newExam.id } : m
+      ));
       toast.success("Prova criada! Redirecionando para edição...");
       router.push(`/dashboard/admin/cursos/${id}/provas/${newExam.id}/editar`);
     } catch (error: any) {
@@ -443,6 +462,7 @@ export default function EditCoursePage() {
               onEditLesson={handleEditLesson}
               onDeleteLesson={handleDeleteLesson}
               onNewExam={handleNewExam}
+              onEditExam={handleEditExam}
               onPreviewVideo={handlePreviewVideo}
             />
           </TabsContent>
