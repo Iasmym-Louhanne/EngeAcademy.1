@@ -20,7 +20,7 @@ import { PermissionProfile, getInternalPermissionProfiles } from "@/lib/permissi
 import { Branch } from "@/lib/permissions";
 import { branches as allBranches } from "@/lib/mock-data";
 import { Plus, Search, Edit, Trash2, ShieldCheck, GitBranch } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../integrations/supabase/client";
 
 export default function InternalUsersPage() {
   const [users, setUsers] = useState<InternalUser[]>([]);
