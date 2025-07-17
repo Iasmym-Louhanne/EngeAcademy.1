@@ -9,15 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, Plus, Save, Trash2, Check, AlertCircle, GripVertical, MoveVertical } from "lucide-react";
+import { ChevronLeft, Plus, Save, Trash2, Check, AlertCircle, GripVertical } from "lucide-react";
 import { getExamWithQuestions, getExamById, updateExam, createQuestion, updateQuestion, deleteQuestion, reorderQuestions } from "@/lib/exam-service";
 import { getCourseById } from "@/lib/course-service";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { QuestionDialog, QuestionData } from "@/components/admin/question-dialog";
 
 export default function EditExamPage() {
   const router = useRouter();
@@ -40,20 +39,9 @@ export default function EditExamPage() {
   // Questões
   const [questions, setQuestions] = useState<any[]>([]);
   
-  // Diálogo de nova questão
-  const [newQuestionDialogOpen, setNewQuestionDialogOpen] = useState(false);
-  const [editQuestionId, setEditQuestionId] = useState<string | null>(null);
-  
-  // Formulário de questão
-  const [questionForm, setQuestionForm] = useState({
-    question_text: "",
-    question_type: "multiple_choice" as "multiple_choice" | "true_false",
-    points: 1,
-    options: [
-      { option_text: "", is_correct: false, order_index: 0 },
-      { option_text: "", is_correct: false, order_index: 1 }
-    ]
-  });
+  // Diálogo de questão
+  const [questionDialogOpen, setQuestionDialogOpen] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
 
   // Carregar dados da prova
   useEffect(() => {
@@ -115,188 +103,47 @@ export default function EditExamPage() {
 
   // Manipulação de questões
   const openNewQuestionDialog = () => {
-    setQuestionForm({
-      question_text: "",
-      question_type: "multiple_choice",
-      points: 1,
-      options: [
-        { option_text: "", is_correct: false, order_index: 0 },
-        { option_text: "", is_correct: false, order_index: 1 }
-      ]
-    });
-    setEditQuestionId(null);
-    setNewQuestionDialogOpen(true);
+    setCurrentQuestion(null);
+    setQuestionDialogOpen(true);
   };
 
   const openEditQuestionDialog = (questionId: string) => {
     const question = questions.find(q => q.id === questionId);
     if (question) {
-      setQuestionForm({
-        question_text: question.question_text,
-        question_type: question.question_type,
-        points: question.points,
-        options: [...question.options] // Clone das opções
-      });
-      setEditQuestionId(questionId);
-      setNewQuestionDialogOpen(true);
+      setCurrentQuestion(question);
+      setQuestionDialogOpen(true);
     }
   };
 
-  const handleQuestionTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setQuestionForm({
-      ...questionForm,
-      question_text: e.target.value
-    });
-  };
-
-  const handleQuestionTypeChange = (value: "multiple_choice" | "true_false") => {
-    let newOptions;
-    
-    if (value === "true_false") {
-      newOptions = [
-        { option_text: "Verdadeiro", is_correct: false, order_index: 0 },
-        { option_text: "Falso", is_correct: false, order_index: 1 }
-      ];
-    } else if (questionForm.question_type === "true_false") {
-      newOptions = [
-        { option_text: "", is_correct: false, order_index: 0 },
-        { option_text: "", is_correct: false, order_index: 1 }
-      ];
-    } else {
-      newOptions = [...questionForm.options];
-    }
-    
-    setQuestionForm({
-      ...questionForm,
-      question_type: value,
-      options: newOptions
-    });
-  };
-
-  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const points = parseInt(e.target.value);
-    setQuestionForm({
-      ...questionForm,
-      points: isNaN(points) ? 1 : points
-    });
-  };
-
-  const handleOptionTextChange = (index: number, text: string) => {
-    const newOptions = [...questionForm.options];
-    newOptions[index].option_text = text;
-    setQuestionForm({
-      ...questionForm,
-      options: newOptions
-    });
-  };
-
-  const handleCorrectOptionChange = (index: number) => {
-    const newOptions = questionForm.options.map((option, i) => ({
-      ...option,
-      is_correct: i === index
-    }));
-    
-    setQuestionForm({
-      ...questionForm,
-      options: newOptions
-    });
-  };
-
-  const addOption = () => {
-    if (questionForm.options.length >= 6) {
-      toast.error("Máximo de 6 opções permitidas.");
-      return;
-    }
-    
-    setQuestionForm({
-      ...questionForm,
-      options: [
-        ...questionForm.options,
-        { 
-          option_text: "", 
-          is_correct: false, 
-          order_index: questionForm.options.length 
-        }
-      ]
-    });
-  };
-
-  const removeOption = (index: number) => {
-    if (questionForm.options.length <= 2) {
-      toast.error("Mínimo de 2 opções necessárias.");
-      return;
-    }
-    
-    const newOptions = questionForm.options.filter((_, i) => i !== index);
-    
-    // Se removermos a opção correta, defina a primeira como correta
-    const hasCorrectOption = newOptions.some(opt => opt.is_correct);
-    if (!hasCorrectOption) {
-      newOptions[0].is_correct = true;
-    }
-    
-    // Reordenar índices
-    const reorderedOptions = newOptions.map((opt, i) => ({
-      ...opt,
-      order_index: i
-    }));
-    
-    setQuestionForm({
-      ...questionForm,
-      options: reorderedOptions
-    });
-  };
-
-  const handleSaveQuestion = async () => {
-    // Validação
-    if (!questionForm.question_text.trim()) {
-      toast.error("O texto da questão é obrigatório.");
-      return;
-    }
-    
-    if (!questionForm.options.some(opt => opt.is_correct)) {
-      toast.error("Selecione uma opção correta.");
-      return;
-    }
-    
-    if (questionForm.options.some(opt => !opt.option_text.trim())) {
-      toast.error("Todas as opções devem ter um texto.");
-      return;
-    }
-    
+  const handleSaveQuestion = async (data: QuestionData) => {
     try {
-      if (editQuestionId) {
-        // Atualizar questão existente
-        const updatedQuestion = await updateQuestion(
-          editQuestionId,
+      if (currentQuestion) {
+        const updated = await updateQuestion(
+          currentQuestion.id,
           {
-            question_text: questionForm.question_text,
-            question_type: questionForm.question_type,
-            points: questionForm.points
+            question_text: data.question_text,
+            question_type: data.question_type,
+            points: data.points
           },
-          questionForm.options
+          data.options
         );
-        
-        setQuestions(questions.map(q => q.id === editQuestionId ? updatedQuestion : q));
+        setQuestions(questions.map(q => q.id === currentQuestion.id ? updated : q));
         toast.success("Questão atualizada com sucesso!");
       } else {
-        // Criar nova questão
         const newQuestion = await createQuestion(
           {
             exam_id: exam.id,
-            question_text: questionForm.question_text,
-            question_type: questionForm.question_type,
-            points: questionForm.points,
+            question_text: data.question_text,
+            question_type: data.question_type,
+            points: data.points,
             order_index: questions.length
           },
-          questionForm.options
+          data.options
         );
-        
         setQuestions([...questions, newQuestion]);
         toast.success("Questão criada com sucesso!");
       }
-      
-      setNewQuestionDialogOpen(false);
+      setQuestionDialogOpen(false);
     } catch (error) {
       console.error("Erro ao salvar questão:", error);
       toast.error("Erro ao salvar questão. Tente novamente.");
@@ -603,125 +450,13 @@ export default function EditExamPage() {
         </div>
       </div>
 
-      {/* Modal para adicionar/editar questão */}
-      <Dialog open={newQuestionDialogOpen} onOpenChange={setNewQuestionDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editQuestionId ? "Editar Questão" : "Nova Questão"}</DialogTitle>
-            <DialogDescription>
-              {editQuestionId 
-                ? "Modifique os detalhes da questão." 
-                : "Adicione uma nova questão à prova."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="question-text">Texto da Questão</Label>
-              <Textarea
-                id="question-text"
-                value={questionForm.question_text}
-                onChange={handleQuestionTextChange}
-                placeholder="Digite o enunciado da questão..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="question-type">Tipo de Questão</Label>
-                <Select
-                  value={questionForm.question_type}
-                  onValueChange={(value: "multiple_choice" | "true_false") => 
-                    handleQuestionTypeChange(value)
-                  }
-                >
-                  <SelectTrigger id="question-type">
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
-                    <SelectItem value="true_false">Verdadeiro/Falso</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="question-points">Pontos</Label>
-                <Input
-                  id="question-points"
-                  type="number"
-                  min="1"
-                  value={questionForm.points}
-                  onChange={handlePointsChange}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Opções de Resposta</Label>
-                {questionForm.question_type === "multiple_choice" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addOption}
-                    disabled={questionForm.options.length >= 6}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Adicionar Opção
-                  </Button>
-                )}
-              </div>
-              
-              <div className="space-y-3 mt-2">
-                <RadioGroup value={questionForm.options.findIndex(opt => opt.is_correct).toString()}>
-                  {questionForm.options.map((option, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value={index.toString()}
-                        id={`option-${index}`}
-                        checked={option.is_correct}
-                        onClick={() => handleCorrectOptionChange(index)}
-                      />
-                      <div className="flex-1">
-                        <Input
-                          value={option.option_text}
-                          onChange={(e) => handleOptionTextChange(index, e.target.value)}
-                          placeholder={`Opção ${index + 1}`}
-                          disabled={questionForm.question_type === "true_false"}
-                        />
-                      </div>
-                      {questionForm.question_type === "multiple_choice" && questionForm.options.length > 2 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOption(index)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Selecione o círculo à esquerda para definir a resposta correta.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewQuestionDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveQuestion}>
-              {editQuestionId ? "Atualizar Questão" : "Adicionar Questão"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modal de questões */}
+      <QuestionDialog
+        isOpen={questionDialogOpen}
+        onClose={() => setQuestionDialogOpen(false)}
+        onSave={handleSaveQuestion}
+        question={currentQuestion}
+      />
     </DashboardLayout>
   );
 }
