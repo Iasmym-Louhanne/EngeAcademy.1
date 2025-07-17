@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { extractYouTubeId } from "@/lib/course-service";
 
 interface LessonDialogProps {
   isOpen: boolean;
@@ -27,7 +28,8 @@ export function LessonDialog({ isOpen, onClose, onSave, lesson }: LessonDialogPr
   }, [lesson, isOpen]);
 
   const handleSave = () => {
-    onSave(formData);
+    const videoId = extractYouTubeId(formData.video_url) || formData.video_url;
+    onSave({ ...formData, video_url: videoId });
   };
 
   return (
